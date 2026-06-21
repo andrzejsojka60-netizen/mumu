@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>精力管理系统 — Energy Manager</title>
+<meta name="description" content="基于《超级清单》的精力管理工具">
+<meta name="theme-color" content="#f8f7f4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="精力管理">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+/* ========== Reset & Variables ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-root: #f8f7f4;
+  --bg-card: #ffffff;
+  --bg-sidebar: #fbfaf8;
+  --border: #e9e5df;
+  --border-light: #f0ede8;
+  --text-primary: #1b1b1b;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9b9b9b;
+  --accent: #4a7c59;
+  --accent-light: #e8f0ea;
+  --accent-warm: #b8753e;
+  --accent-warm-light: #fdf0e2;
+  --blue: #3b6fb6;
+  --blue-light: #e8f1fd;
+  --purple: #7c5cbf;
+  --purple-light: #f2ecfb;
+  --red: #c94a4a;
+  --red-light: #fdeaea;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,.08);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --transition: 0.2s cubic-bezier(.4,0,.2,1);
+}
+
+html { font-size: 15px; }
+body {
+  font-family: var(--font);
+  background: var(--bg-root);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ========== Sidebar ========== */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 10;
+}
+.sidebar-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 2rem;
+  padding: 0 .5rem;
+}
+.sidebar-logo .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(1.4); }
+}
+.nav-list { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
+.nav-item {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .6rem .75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: .9rem;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  border: none; background: none;
+  width: 100%; text-align: left;
+  font-family: var(--font);
+}
+.nav-item:hover { background: #f0ede8; color: var(--text-primary); }
+.nav-item.active { background: #ece9e2; color: var(--text-primary); font-weight: 600; }
+.nav-item .icon { font-size: 1.15rem; width: 24px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .15rem .45rem;
+  border-radius: 10px;
+  min-width: 1.3rem;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+  font-size: .78rem;
+  color: var(--text-tertiary);
+}
+.data-info { display: flex; flex-direction: column; gap: .3rem; }
+
+/* ========== Main ========== */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  padding: 1.5rem 2rem 3rem;
+  max-width: 960px;
+  width: 100%;
+}
+
+/* ========== Header ========== */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.page-title { font-size: 1.4rem; font-weight: 700; }
+.page-date { font-size: .85rem; color: var(--text-tertiary); }
+
+/* ========== Cards ========== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  overflow-x: auto;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.card-title {
+  font-size: .95rem; font-weight: 650;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: .4rem;
+}
+.card-subtitle { font-size: .8rem; color: var(--text-tertiary); }
+
+/* ========== Form Elements ========== */
+label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 550;
+  color: var(--text-secondary);
+  margin-bottom: .3rem;
+}
+input[type="number"], input[type="text"], textarea, select {
+  width: 100%;
+  padding: .5rem .65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: .85rem;
+  font-family: var(--font);
+  color: var(--text-primary);
+  background: #fdfdfc;
+  transition: var(--transition);
+  outline: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+textarea { resize: vertical; min-height: 3rem; }
+
+/* Period record row */
+.period-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 120px 80px;
+  gap: .6rem;
+  align-items: end;
+  padding: .7rem .5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+.period-row:last-child { border-bottom: none; }
+.period-label {
+  font-size: .82rem; font-weight: 600;
+  color: var(--text-primary);
+}
+.period-time { font-size: .7rem; color: var(--text-tertiary); display: block; }
+
+/* Score input with visual */
+.score-wrap { display: flex; align-items: center; gap: .5rem; }
+.score-bar {
+  flex: 1; height: 6px; border-radius: 3px;
+  background: #e9e5df; overflow: hidden;
+}
+.score-fill {
+  height: 100%; border-radius: 3px;
+  transition: width .3s ease, background .3s ease;
+}
+.score-num { font-weight: 700; font-size: 1rem; min-width: 2rem; text-align: center; }
+
+/* Emotion tags */
+.emotion-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+.emotion-tag {
+  padding: .25rem .6rem;
+  border-radius: 20px;
+  font-size: .75rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #fdfdfc;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.emotion-tag:hover { border-color: var(--accent); color: var(--accent); }
+.emotion-tag.selected { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 550; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: .83rem;
+  font-weight: 550;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: var(--font);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #3d6a4a; }
+.btn-secondary { background: #fff; color: var(--text-primary); border-color: var(--border); }
+.btn-secondary:hover { background: #f5f3f0; }
+.btn-warm { background: var(--accent-warm-light); color: var(--accent-warm); }
+.btn-warm:hover { background: #f8e4cf; }
+.btn-sm { padding: .3rem .65rem; font-size: .75rem; }
+.btn-icon { padding: .3rem .5rem; }
+.btn-danger { color: var(--red); border-color: var(--red-light); background: #fff; }
+.btn-danger:hover { background: var(--red-light); }
+
+/* ========== Toolbox ========== */
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: .75rem;
+}
+.tool-card {
+  background: #fdfdfc;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.tool-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+.tool-name { font-weight: 600; font-size: .88rem; margin-bottom: .2rem; }
+.tool-desc { font-size: .78rem; color: var(--text-tertiary); line-height: 1.5; }
+.tool-category {
+  display: inline-block; font-size: .68rem;
+  padding: .1rem .45rem; border-radius: 10px;
+  margin-bottom: .4rem;
+  font-weight: 500;
+}
+.tool-actions { display: flex; gap: .35rem; margin-top: .5rem; }
+
+/* ========== Charts ========== */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.chart-wrap { position: relative; height: 260px; }
+.chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+@media (max-width: 768px) {
+  .charts-row { grid-template-columns: 1fr; }
+  .period-row { grid-template-columns: 1fr; gap: .3rem; }
+}
+
+/* ========== Summary ========== */
+.summary-block {
+  background: var(--accent-light);
+  border: 1px solid #d4e5d9;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  line-height: 1.8;
+  font-size: .88rem;
+}
+.summary-block h3 { font-size: .95rem; margin-bottom: .5rem; color: var(--accent); }
+.summary-highlight { color: var(--accent); font-weight: 650; }
+.summary-warn { color: var(--accent-warm); font-weight: 650; }
+
+/* ========== Stats row ========== */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+.stat-value { font-size: 1.6rem; font-weight: 700; }
+.stat-label { font-size: .75rem; color: var(--text-tertiary); margin-top: .15rem; }
+.stat-card.accent { border-left: 3px solid var(--accent); }
+.stat-card.warm { border-left: 3px solid var(--accent-warm); }
+.stat-card.blue { border-left: 3px solid var(--blue); }
+.stat-card.purple { border-left: 3px solid var(--purple); }
+
+/* ========== Modal ========== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.3);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: var(--shadow-lg);
+}
+.modal-title { font-size: 1rem; font-weight: 650; margin-bottom: 1rem; }
+
+/* ========== Toast ========== */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%);
+  background: #1b1b1b; color: #fff;
+  padding: .6rem 1.2rem;
+  border-radius: 20px;
+  font-size: .82rem;
+  z-index: 200;
+  animation: toast-in .3s ease;
+}
+@keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* ========== Empty state ========== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-tertiary);
+}
+.empty-state .icon { font-size: 2.5rem; margin-bottom: .5rem; }
+
+/* Utility */
+.mt-1 { margin-top: .5rem; }
+.mt-2 { margin-top: 1rem; }
+.mb-1 { margin-bottom: .5rem; }
+.hidden { display: none !important; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-sm { gap: .5rem; }
+
+/* Habit tracker */
+.habit-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem 0; border-bottom: 1px solid var(--border-light);
+}
+.habit-row:last-child { border-bottom: none; }
+.habit-days {
+  display: flex; gap: .2rem; margin-left: auto;
+}
+.habit-dot {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: .6rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.habit-dot.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+.habit-dot:hover { border-color: var(--accent); }
+
+/* interference input */
+.interference-row { display: flex; gap: .35rem; align-items: center; margin-top: .3rem; }
+.interference-tag {
+  padding: .15rem .45rem;
+  border-radius: 12px;
+  font-size: .72rem;
+  background: var(--red-light);
+  color: var(--red);
+  display: inline-flex; align-items: center; gap: .25rem;
+  cursor: pointer;
+}
+.interference-tag .remove { font-weight: 700; font-size: .9rem; }
+
+/* ========== Install Banner ========== */
+.install-banner {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  padding: .8rem 1.2rem;
+  padding-bottom: max(.8rem, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .8rem;
+  box-shadow: 0 -2px 12px rgba(0,0,0,.08);
+  animation: slide-up .35s ease;
+  flex-wrap: wrap;
+}
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.install-banner-text { display: flex; flex-direction: column; gap: .1rem; }
+.install-banner-text strong { font-size: .88rem; color: var(--text-primary); }
+.install-banner-text span { font-size: .75rem; color: var(--text-tertiary); }
+.install-banner-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+@media (max-width: 768px) {
+  .install-banner { flex-direction: column; text-align: center; padding: .7rem 1rem; }
+  .install-banner { bottom: 4.5rem; } /* above bottom nav */
+}
+
+/* ========== MOBILE: Bottom Navigation ========== */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  z-index: 20;
+  padding: .3rem .5rem;
+  padding-bottom: max(.3rem, env(safe-area-inset-bottom));
+  justify-content: space-around;
+}
+.bottom-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+  padding: .35rem .5rem;
+  border: none; background: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-family: var(--font);
+  transition: var(--transition);
+  border-radius: var(--radius-sm);
+  min-width: 56px;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-item.active { color: var(--accent); }
+.bottom-nav-item:active { background: var(--accent-light); }
+.bn-icon { font-size: 1.3rem; line-height: 1; }
+.bn-label { font-size: .65rem; font-weight: 500; }
+
+/* ========== MOBILE: Responsive Overrides ========== */
+@media (max-width: 768px) {
+  html { font-size: 16px; }
+
+  /* Hide sidebar on mobile */
+  .sidebar { display: none; }
+
+  /* Show bottom nav */
+  .bottom-nav { display: flex; }
+
+  /* Full-width main */
+  .main {
+    margin-left: 0;
+    padding: 1rem 1rem 6rem; /* bottom padding for nav */
+    max-width: 100%;
+  }
+
+  /* Page header */
+  .page-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .page-title { font-size: 1.2rem; }
+
+  /* Stats: 2x2 grid */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .stat-card { padding: .75rem .85rem; }
+  .stat-value { font-size: 1.3rem; }
+
+  /* Charts stack */
+  .charts-row { grid-template-columns: 1fr; }
+  .chart-wrap { height: 220px; }
+
+  /* Cards */
+  .card { padding: 1rem 1rem; border-radius: var(--radius-md); }
+
+  /* Period record — stack vertically */
+  .period-row {
+    grid-template-columns: 1fr;
+    gap: .35rem;
+    padding: .8rem .3rem;
+  }
+  /* Hide the table header row on mobile */
+  .period-header { display: none !important; }
+
+  /* Emotion tags — more tap-friendly */
+  .emotion-tag {
+    padding: .35rem .7rem;
+    font-size: .8rem;
+    margin-bottom: .15rem;
+  }
+
+  /* Range slider — wider */
+  .score-wrap { padding: .3rem 0; }
+
+  /* Buttons — larger touch targets */
+  .btn { padding: .55rem 1rem; font-size: .85rem; }
+  .btn-sm { padding: .4rem .7rem; font-size: .78rem; }
+
+  /* Tool grid — single column */
+  .tool-grid { grid-template-columns: 1fr; }
+
+  /* Summary table — scrollable */
+  .card table { font-size: .78rem; }
+  .card table th, .card table td { padding: .35rem .25rem; }
+
+  /* Habit dots — bigger */
+  .habit-dot { width: 22px; height: 22px; font-size: .7rem; }
+  .habit-row { flex-wrap: wrap; gap: .3rem; padding: .5rem 0; }
+
+  /* Modal full-width */
+  .modal { width: 95vw; padding: 1.2rem; }
+
+  /* Toast */
+  .toast { bottom: 5.5rem; font-size: .78rem; padding: .55rem 1rem; }
+}
+
+/* ========== MOBILE: Even smaller screens ========== */
+@media (max-width: 400px) {
+  .main { padding: .75rem .75rem 5.5rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: .4rem; }
+  .stat-value { font-size: 1.1rem; }
+  .stat-label { font-size: .7rem; }
+  .bottom-nav-item { padding: .25rem .35rem; min-width: 48px; }
+  .bn-icon { font-size: 1.15rem; }
+  .bn-label { font-size: .6rem; }
+  .page-title { font-size: 1.05rem; }
+  .card { padding: .75rem .75rem; }
+  .period-label { font-size: .78rem; }
+  .emotion-tag { padding: .3rem .55rem; font-size: .75rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== SIDEBAR ====== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="dot"></span> 精力管理
+  </div>
+  <nav>
+    <ul class="nav-list">
+      <li><button class="nav-item active" data-panel="record"><span class="icon">📝</span> 精力记录</button></li>
+      <li><button class="nav-item" data-panel="analysis"><span class="icon">📊</span> 数据分析</button></li>
+      <li><button class="nav-item" data-panel="toolbox"><span class="icon">🧰</span> 恢复工具箱</button></li>
+      <li><button class="nav-item" data-panel="summary"><span class="icon">✨</span> 每日总结</button></li>
+      <li><button class="nav-item" data-panel="habits"><span class="icon">✅</span> 习惯打卡</button></li>
+    </ul>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="data-info">
+      <span id="dataDays">📅 已记录 0 天</span>
+      <span id="dataRecords">📝 共 0 条记录</span>
+    </div>
+    <div style="display:flex;gap:.35rem;margin-top:.6rem">
+      <button class="btn btn-secondary btn-sm" onclick="exportData()" title="导出JSON备份" style="flex:1;justify-content:center">📤</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()" title="导入JSON备份" style="flex:1;justify-content:center">📥</button>
+      <button class="btn btn-danger btn-sm" onclick="resetData()" title="清除全部数据" style="flex:1;justify-content:center">🗑️</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" onchange="importData(this)" style="display:none">
+  </div>
+</aside>
+
+<!-- ====== MAIN CONTENT ====== -->
+<main class="main" id="mainContent"></main>
+
+<!-- ====== BOTTOM NAV (mobile) ====== -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" data-panel="record"><span class="bn-icon">📝</span><span class="bn-label">记录</span></button>
+  <button class="bottom-nav-item" data-panel="analysis"><span class="bn-icon">📊</span><span class="bn-label">分析</span></button>
+  <button class="bottom-nav-item" data-panel="toolbox"><span class="bn-icon">🧰</span><span class="bn-label">工具箱</span></button>
+  <button class="bottom-nav-item" data-panel="summary"><span class="bn-icon">✨</span><span class="bn-label">总结</span></button>
+  <button class="bottom-nav-item" data-panel="habits"><span class="bn-icon">✅</span><span class="bn-label">打卡</span></button>
+</nav>
+
+<!-- ====== INSTALL BANNER ====== -->
+<div id="installBanner" class="install-banner hidden">
+  <div class="install-banner-text">
+    <strong>📱 添加到主屏幕</strong>
+    <span>像原生 App 一样使用精力管理</span>
+  </div>
+  <div class="install-banner-actions">
+    <button class="btn btn-sm btn-secondary" onclick="dismissInstall()">稍后</button>
+    <button class="btn btn-sm btn-primary" id="installBtn">安装</button>
+  </div>
+</div>
+
+<!-- ====== TOAST ====== -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+/* ================================================================
+   ENERGY MANAGEMENT SYSTEM
+   Based on《超级清单：精力管理实用技巧、表格与自我训练》
+   ================================================================ */
+
+// ==================== DATA LAYER ====================
+const STORAGE_KEY = 'energyManager';
+const DEFAULT_EMOTIONS = ['专注','高效','平静','疲惫','焦虑','亢奋','低落','放松','紧张','满足'];
+const PERIODS = [
+  { id: 'morning',   label: '早晨', time: '6:00–9:00',  emoji: '🌅' },
+  { id: 'forenoon',  label: '上午', time: '9:00–12:00', emoji: '☀️' },
+  { id: 'afternoon', label: '下午', time: '12:00–18:00', emoji: '🌤️' },
+  { id: 'evening',   label: '晚上', time: '18:00–22:00', emoji: '🌙' },
+];
+const DEFAULT_TOOLS = [
+  { id: 't1', name: '冥想呼吸法', category: '放松', desc: '闭眼深呼吸5分钟，专注一呼一吸，清空杂念。书中第五章推荐。' },
+  { id: 't2', name: '番茄工作法', category: '专注', desc: '25分钟专注+5分钟休息，每4个番茄钟休息15-30分钟。书中第六章推荐。' },
+  { id: 't3', name: '莫法特休息法', category: '切换', desc: '在不同类型任务间切换（脑力→体力→创意），避免单一疲劳。书中第八章推荐。' },
+  { id: 't4', name: 'ICS减压法', category: '放松', desc: '识别(Identify)→澄清(Clarify)→解决(Solve)，三步处理压力源。书中第五章推荐。' },
+  { id: 't5', name: '彭尼贝克写作法', category: '情绪', desc: '连续4天、每天15分钟写出最深层的想法和感受。书中第五章推荐。' },
+  { id: 't6', name: '短暂小憩', category: '恢复', desc: '10-20分钟短暂闭眼休息（不超过30分钟），快速恢复精力。书中第七章推荐。' },
+  { id: 't7', name: '散步/运动', category: '恢复', desc: '15-30分钟户外散步或轻度运动，转换环境激活身体。书中第四章/第七章推荐。' },
+  { id: 't8', name: '正念练习', category: '放松', desc: '将注意力放在当下，不评判地观察自己的感受。书中第五章/第八章推荐。' },
+];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) { /* corrupted data */ }
+  return getDefaultData();
+}
+
+function getDefaultData() {
+  return {
+    records: {},     // { "2026-06-21": { periods: {...}, interference: [], tasks: "" } }
+    tools: [...DEFAULT_TOOLS],
+    customEmotions: [],
+    habitLog: {},    // { "2026-06-21": { "toolId": true, ... } }
+  };
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+let APP_DATA = loadData();
+
+function getAllEmotions() {
+  return [...DEFAULT_EMOTIONS, ...APP_DATA.customEmotions];
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function formatDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  const w = ['日','一','二','三','四','五','六'][dt.getDay()];
+  return `${d.slice(5)} (周${w})`;
+}
+
+function ensureRecord(date) {
+  if (!APP_DATA.records[date]) {
+    APP_DATA.records[date] = {
+      periods: {},
+      interference: [],
+      tasks: '',
+      note: '',
+    };
+  }
+  return APP_DATA.records[date];
+}
+
+// ==================== UI RENDERING ====================
+let currentPanel = 'record';
+let currentDate = today();
+let selectedEmotions = {}; // { periodId: emotion }
+
+const $main = document.getElementById('mainContent');
+const $toast = document.getElementById('toast');
+
+function showToast(msg) {
+  $toast.textContent = msg;
+  $toast.classList.remove('hidden');
+  setTimeout(() => $toast.classList.add('hidden'), 1800);
+}
+
+function switchPanel(panel) {
+  currentPanel = panel;
+  // Update sidebar nav
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const sidebarBtn = document.querySelector(`.nav-item[data-panel="${panel}"]`);
+  if (sidebarBtn) sidebarBtn.classList.add('active');
+  // Update bottom nav (mobile)
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  const bottomBtn = document.querySelector(`.bottom-nav-item[data-panel="${panel}"]`);
+  if (bottomBtn) bottomBtn.classList.add('active');
+  render();
+}
+
+function updateSidebarStats() {
+  const dates = Object.keys(APP_DATA.records).filter(d => {
+    const rec = APP_DATA.records[d];
+    return Object.keys(rec.periods || {}).length > 0;
+  });
+  document.getElementById('dataDays').textContent = `📅 已记录 ${dates.length} 天`;
+  let total = 0;
+  dates.forEach(d => total += Object.keys(APP_DATA.records[d].periods).length);
+  document.getElementById('dataRecords').textContent = `📝 共 ${total} 条记录`;
+}
+
+// ==================== DATA EXPORT / IMPORT ====================
+function exportData() {
+  const blob = new Blob([JSON.stringify(APP_DATA, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `energy-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 数据已导出');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.records || !data.tools) throw new Error('格式不正确');
+      if (!confirm(`即将导入数据：${Object.keys(data.records).length} 天记录，${data.tools.length} 个恢复方法。\n当前数据将被覆盖，确定继续？`)) return;
+      APP_DATA = data;
+      saveData(APP_DATA);
+      showToast('📥 数据已导入，页面将刷新');
+      setTimeout(() => { currentDate = today(); render(); }, 500);
+    } catch(err) {
+      showToast('❌ 文件格式不正确');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function resetData() {
+  if (!confirm('⚠️ 确定要清除全部数据吗？\n此操作不可恢复！建议先导出备份。')) return;
+  if (!confirm('再次确认：清除所有精力记录、自定义工具和打卡数据？')) return;
+  APP_DATA = getDefaultData();
+  saveData(APP_DATA);
+  currentDate = today();
+  render();
+  showToast('🗑️ 数据已清除');
+}
+
+// ==================== PANEL: RECORD ====================
+function renderRecord() {
+  const rec = ensureRecord(currentDate);
+  const emotions = getAllEmotions();
+  // Reset selected emotions from current record
+  selectedEmotions = {};
+  PERIODS.forEach(p => {
+    selectedEmotions[p.id] = rec.periods[p.id]?.emotion || '';
+  });
+
+  let periodsHtml = PERIODS.map(p => {
+    const pd = rec.periods[p.id] || {};
+    const score = pd.score || 5;
+    const fillColor = score >= 7 ? 'var(--accent)' : score >= 4 ? 'var(--accent-warm)' : 'var(--red)';
+    const selectedEmo = selectedEmotions[p.id] || '';
+
+    const emotionTagsHtml = emotions.map(e =>
+      `<span class="emotion-tag${e === selectedEmo ? ' selected' : ''}"
+            data-period="${p.id}" data-emotion="${e}"
+            onclick="selectEmotion('${p.id}','${e}')">${e}</span>`
+    ).join('') + `<span class="emotion-tag" onclick="addCustomEmotion('${p.id}')" style="border-style:dashed;opacity:.6">+ 自定义</span>`;
+
+    return `
+    <div class="period-row">
+      <div>
+        <span class="period-label">${p.emoji} ${p.label}</span>
+        <span class="period-time">${p.time}</span>
+      </div>
+      <div>
+        <div class="emotion-tags mb-1">${emotionTagsHtml}</div>
+        <input type="text" placeholder="干扰因素（如手机、会议、噪音…）"
+               value="${(pd.interference || []).join('，')}"
+               onchange="updatePeriodField('${p.id}','interferenceStr',this.value)"
+               style="font-size:.78rem">
+        <input type="text" placeholder="完成事项（可选）"
+               value="${(pd.tasks || []).join('，')}"
+               onchange="updatePeriodField('${p.id}','tasksStr',this.value)"
+               style="font-size:.78rem; margin-top:.2rem">
+      </div>
+      <div class="score-wrap">
+        <input type="range" min="1" max="10" value="${score}"
+               oninput="updateScore('${p.id}',this.value)"
+               style="width:100%">
+      </div>
+      <div style="text-align:center">
+        <span class="score-num" data-score-num="${p.id}" style="color:${fillColor}">${score}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const html = `
+  <div class="page-header">
+    <h1 class="page-title">📝 每日精力记录</h1>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
+      <span style="font-weight:600;min-width:160px;text-align:center">${formatDate(currentDate)}</span>
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
+      <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⏱️ 精力分配记录表</span>
+      <span class="card-subtitle">参考书中第二章·精力分配记录表</span>
+    </div>
+    <div class="period-header" style="display:grid;grid-template-columns:90px 1fr 160px 80px;gap:.6rem;padding:.4rem .5rem;font-size:.75rem;color:var(--text-tertiary);font-weight:550">
+      <span>时间段</span><span>情绪 & 干扰 & 事项</span><span>精力评分 (1-10)</span><span>得分</span>
+    </div>
+    ${periodsHtml}
+  </div>
+
+  <div class="card">
+    <div class="card-title mb-1">📋 今日备注</div>
+    <textarea placeholder="今天有哪些影响精力的事情？对明天的精力管理有什么启发？"
+              onchange="updateDayNote(this.value)">${rec.note || ''}</textarea>
+    <button class="btn btn-primary mt-1" onclick="saveRecord()">💾 保存记录</button>
+  </div>`;
+
+  $main.innerHTML = html;
+}
+
+function selectEmotion(periodId, emotion) {
+  selectedEmotions[periodId] = emotion;
+  // Refresh the emotion tags visual
+  document.querySelectorAll(`.emotion-tag[data-period="${periodId}"]`).forEach(tag => {
+    tag.classList.toggle('selected', tag.dataset.emotion === emotion);
+  });
+  // Update data
+  const rec = ensureRecord(currentDate);
+  if (!rec.periods[periodId]) rec.periods[periodId] = {};
+  rec.periods[periodId].emotion = emotion;
+  saveData(APP_DATA);
+}
+
+function addCustomEmotion(periodId) {
+  const name = prompt('输入自定义情绪标签（如：感恩、无聊、期待…）');
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  if (getAllEmotions().includes(trimmed)) { showToast('该情绪标签已存在'); return; }
+  APP_DATA.customEmotions.push(trimmed);
+  saveData(APP_DATA);
+  selectEmotion(periodId, trimmed);
+  render(); // re-render to show new tag
+}
+
+function updateScore(periodId, val) {
+  const num = parseInt(val);
+  const rec = ensureRecord(currentDate);
+  if (!rec.periods[periodId]) rec.periods[periodId] = {};
+  rec.periods[periodId].score = num;
+  saveData(APP_DATA);
+
+  const scoreEl = document.querySelector(`[data-score-num="${periodId}"]`);
+  if (scoreEl) {
+    const fillColor = num >= 7 ? 'var(--accent)' : num >= 4 ? 'var(--accent-warm)' : 'var(--red)';
+    scoreEl.textContent = num;
+    scoreEl.style.color = fillColor;
+  }
+}
+
+function updatePeriodField(periodId, field, value) {
+  const rec = ensureRecord(currentDate);
+  if (!rec.periods[periodId]) rec.periods[periodId] = {};
+  if (field === 'interferenceStr') {
+    rec.periods[periodId].interference = value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+  } else if (field === 'tasksStr') {
+    rec.periods[periodId].tasks = value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+  }
+  saveData(APP_DATA);
+}
+
+function updateDayNote(val) {
+  const rec = ensureRecord(currentDate);
+  rec.note = val;
+  saveData(APP_DATA);
+}
+
+function saveRecord() {
+  saveData(APP_DATA);
+  updateSidebarStats();
+  showToast('✅ 记录已保存');
+}
+
+function changeDate(delta) {
+  const d = new Date(currentDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  currentDate = d.toISOString().slice(0,10);
+  render();
+}
+
+function goToToday() {
+  currentDate = today();
+  render();
+}
+
+// ==================== PANEL: ANALYSIS ====================
+function renderAnalysis() {
+  const dates = Object.keys(APP_DATA.records).sort();
+  const validDates = dates.filter(d => {
+    const periods = APP_DATA.records[d].periods || {};
+    return Object.keys(periods).length > 0;
+  });
+  const totalDays = validDates.length;
+  const allScores = [];
+  validDates.forEach(d => {
+    const periods = APP_DATA.records[d].periods || {};
+    PERIODS.forEach(p => {
+      if (periods[p.id]?.score) allScores.push(periods[p.id].score);
+    });
+  });
+  const avgScore = allScores.length ? (allScores.reduce((a,b)=>a+b,0) / allScores.length).toFixed(1) : '—';
+
+  // Best and worst periods
+  const periodScores = {};
+  PERIODS.forEach(p => periodScores[p.id] = []);
+  validDates.forEach(d => {
+    const periods = APP_DATA.records[d].periods || {};
+    PERIODS.forEach(p => {
+      if (periods[p.id]?.score) periodScores[p.id].push(periods[p.id].score);
+    });
+  });
+  let bestPeriod = '—', worstPeriod = '—';
+  let bestAvg = 0, worstAvg = 10;
+  PERIODS.forEach(p => {
+    const scores = periodScores[p.id];
+    if (scores.length) {
+      const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
+      if (avg > bestAvg) { bestAvg = avg; bestPeriod = p.label; }
+      if (avg < worstAvg) { worstAvg = avg; worstPeriod = p.label; }
+    }
+  });
+
+  // Emotion distribution
+  const emotionCount = {};
+  validDates.forEach(d => {
+    const periods = APP_DATA.records[d].periods || {};
+    Object.values(periods).forEach(pd => {
+      if (pd.emotion) emotionCount[pd.emotion] = (emotionCount[pd.emotion] || 0) + 1;
+    });
+  });
+
+  // Weekly trend (last 14 days)
+  const trendLabels = [], trendData = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0,10);
+    const periods = (APP_DATA.records[ds] || {}).periods || {};
+    const scores = Object.values(periods).filter(p => p.score).map(p => p.score);
+    trendLabels.push(ds.slice(5));
+    trendData.push(scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : null);
+  }
+
+  const html = `
+  <div class="page-header">
+    <h1 class="page-title">📊 数据分析</h1>
+    <span class="page-date">基于 ${totalDays} 天数据</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card accent">
+      <div class="stat-value">${avgScore}</div>
+      <div class="stat-label">平均精力评分</div>
+    </div>
+    <div class="stat-card warm">
+      <div class="stat-value">${bestPeriod}</div>
+      <div class="stat-label">高效时段（均分 ${bestAvg.toFixed(1)}）</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-value">${totalDays}</div>
+      <div class="stat-label">记录天数</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-value">${worstPeriod}</div>
+      <div class="stat-label">低谷时段（均分 ${worstAvg.toFixed(1)}）</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title mb-1">📈 精力趋势（近14天）</div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title mb-1">📊 各时段平均精力</div>
+      <div class="chart-wrap"><canvas id="periodChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card mt-1">
+    <div class="card-title mb-1">🎭 情绪分布</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+      ${Object.entries(emotionCount).sort((a,b)=>b[1]-a[1]).map(([emo, cnt]) =>
+        `<span style="padding:.25rem .6rem;border-radius:20px;background:var(--accent-light);font-size:.8rem">${emo} × ${cnt}</span>`
+      ).join('') || '<span style="color:var(--text-tertiary)">暂无情绪数据</span>'}
+    </div>
+  </div>`;
+
+  $main.innerHTML = html;
+
+  // Render charts after DOM update
+  setTimeout(() => {
+    renderTrendChart(trendLabels, trendData);
+    renderPeriodChart(periodScores);
+  }, 50);
+}
+
+function renderTrendChart(labels, data) {
+  const ctx = document.getElementById('trendChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '日均精力评分',
+        data,
+        borderColor: '#4a7c59',
+        backgroundColor: 'rgba(74,124,89,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#4a7c59',
+        spanGaps: false,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 10, ticks: { stepSize: 2 } },
+      },
+    },
+  });
+}
+
+function renderPeriodChart(periodScores) {
+  const ctx = document.getElementById('periodChart');
+  if (!ctx) return;
+  const labels = PERIODS.map(p => p.label);
+  const data = PERIODS.map(p => {
+    const scores = periodScores[p.id] || [];
+    return scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : 0;
+  });
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '平均精力评分',
+        data,
+        backgroundColor: ['rgba(74,124,89,0.7)', 'rgba(184,117,62,0.7)', 'rgba(59,111,182,0.7)', 'rgba(124,92,191,0.7)'],
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 10, ticks: { stepSize: 2 } },
+      },
+    },
+  });
+}
+
+// ==================== PANEL: TOOLBOX ====================
+function renderToolbox() {
+  const categories = ['全部', ...new Set(APP_DATA.tools.map(t => t.category))];
+
+  const toolsHtml = APP_DATA.tools.map(t => `
+    <div class="tool-card" data-category="${t.category}">
+      <span class="tool-category" style="background:var(--accent-light);color:var(--accent)">${t.category}</span>
+      <div class="tool-name">${t.name}</div>
+      <div class="tool-desc">${t.desc}</div>
+      <div class="tool-actions">
+        <button class="btn btn-sm btn-primary" onclick="useTool('${t.id}')">🧘 使用此方法</button>
+        ${!DEFAULT_TOOLS.find(dt => dt.id === t.id) ? `<button class="btn btn-sm btn-danger" onclick="deleteTool('${t.id}')">删除</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const html = `
+  <div class="page-header">
+    <h1 class="page-title">🧰 精力恢复工具箱</h1>
+    <button class="btn btn-primary btn-sm" onclick="showAddTool()">+ 添加方法</button>
+  </div>
+  <div class="flex-between mb-1" style="gap:.5rem">
+    <span style="font-size:.82rem;color:var(--text-secondary)">参考书中第四~九章推荐的方法</span>
+  </div>
+  <div class="tool-grid">${toolsHtml}</div>`;
+
+  $main.innerHTML = html;
+}
+
+function useTool(toolId) {
+  const tool = APP_DATA.tools.find(t => t.id === toolId);
+  if (!tool) return;
+  // Log to today's habit
+  if (!APP_DATA.habitLog[today()]) APP_DATA.habitLog[today()] = {};
+  APP_DATA.habitLog[today()][toolId] = true;
+  saveData(APP_DATA);
+  showToast(`✅ 已记录：${tool.name}`);
+}
+
+function showAddTool() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+  <div class="modal">
+    <div class="modal-title">添加自定义恢复方法</div>
+    <label>名称</label><input id="newToolName" type="text" placeholder="如：冷水洗脸">
+    <label class="mt-1">分类</label><input id="newToolCat" type="text" placeholder="如：恢复、专注、放松">
+    <label class="mt-1">描述</label><textarea id="newToolDesc" placeholder="简短说明这个方法…"></textarea>
+    <div class="flex-between mt-2">
+      <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">取消</button>
+      <button class="btn btn-primary" onclick="addCustomTool()">添加</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function addCustomTool() {
+  const name = document.getElementById('newToolName').value.trim();
+  const cat = document.getElementById('newToolCat').value.trim() || '自定义';
+  const desc = document.getElementById('newToolDesc').value.trim();
+  if (!name) { showToast('请输入名称'); return; }
+  APP_DATA.tools.push({
+    id: 'custom_' + Date.now(),
+    name,
+    category: cat,
+    desc: desc || '自定义恢复方法',
+  });
+  saveData(APP_DATA);
+  document.querySelector('.modal-overlay')?.remove();
+  render();
+  showToast('✅ 已添加');
+}
+
+function deleteTool(toolId) {
+  APP_DATA.tools = APP_DATA.tools.filter(t => t.id !== toolId);
+  saveData(APP_DATA);
+  render();
+  showToast('🗑️ 已删除');
+}
+
+// ==================== PANEL: SUMMARY ====================
+function renderSummary() {
+  const rec = APP_DATA.records[currentDate] || { periods: {}, note: '' };
+  const periods = rec.periods || {};
+  const entries = PERIODS.map(p => ({ ...p, data: periods[p.id] || {} })).filter(e => e.data.score);
+
+  if (entries.length === 0) {
+    $main.innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">✨ 每日总结</h1>
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
+      <span style="font-weight:600">${formatDate(currentDate)}</span>
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
+    </div>
+    <div class="card"><div class="empty-state">
+      <div class="icon">📭</div>
+      <p>今天还没有精力记录</p>
+      <p style="font-size:.8rem">先去「精力记录」页面录入数据吧</p>
+    </div></div>`;
+    return;
+  }
+
+  const scores = entries.map(e => e.data.score);
+  const maxScore = Math.max(...scores);
+  const minScore = Math.min(...scores);
+  const avg = (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1);
+  const peak = entries.find(e => e.data.score === maxScore);
+  const valley = entries.find(e => e.data.score === minScore);
+  const emotions = entries.map(e => e.data.emotion).filter(Boolean);
+  const topEmotion = emotions.length ? [...new Set(emotions)].slice(0,3).join('、') : '无记录';
+
+  const allInterference = entries.flatMap(e => e.data.interference || []);
+  const topInterference = [...new Set(allInterference)].slice(0, 5);
+
+  const fluctuation = maxScore - minScore;
+  let trendAdvice = '';
+  if (fluctuation >= 5) trendAdvice = '今日精力波动较大，注意在低谷时段安排恢复活动，避免硬撑。';
+  else if (fluctuation >= 3) trendAdvice = '精力有一定起伏，属于正常范围。低谷时段可以做简单任务。';
+  else trendAdvice = '精力比较平稳，保持当前节奏。';
+
+  let peakAdvice = '';
+  if (peak && peak.data.emotion === '高效') peakAdvice = `你${peak.label}时段效率最高，建议把重要任务安排在这个时段。`;
+  else if (peak) peakAdvice = `你${peak.label}精力最好，可以尝试在这个时段做高难度工作。`;
+
+  let valleyAdvice = '';
+  if (valley) valleyAdvice = `${valley.label}精力偏低，可以考虑用「恢复工具箱」中的方法（如短暂小憩或散步）来补充精力。`;
+
+  const html = `
+  <div class="page-header">
+    <h1 class="page-title">✨ 每日总结</h1>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
+      <span style="font-weight:600;min-width:160px;text-align:center">${formatDate(currentDate)}</span>
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
+      <button class="btn btn-warm btn-sm" onclick="copySummary()">📋 复制总结</button>
+    </div>
+  </div>
+
+  <div class="summary-block" id="summaryText">
+    <h3>📋 ${formatDate(currentDate)} 精力总结</h3>
+    <p>
+      📊 <strong>平均精力评分：</strong><span class="summary-highlight">${avg} / 10</span>，
+      峰值 <span class="summary-highlight">${maxScore}分（${peak?.label}）</span>，
+      低谷 <span class="summary-warn">${minScore}分（${valley?.label}）</span>，
+      精力波动幅度 ${fluctuation} 分。
+    </p>
+    <p>🎭 <strong>主要情绪：</strong>${topEmotion}</p>
+    ${topInterference.length ? `<p>⚠️ <strong>主要干扰：</strong>${topInterference.join('、')}</p>` : ''}
+    <p>💡 <strong>分析建议：</strong></p>
+    <ul style="margin-left:1.5rem">
+      <li>${trendAdvice}</li>
+      ${peakAdvice ? `<li>${peakAdvice}</li>` : ''}
+      ${valleyAdvice ? `<li>${valleyAdvice}</li>` : ''}
+      ${rec.note ? `<li>你的备注：${rec.note}</li>` : ''}
+    </ul>
+    <p style="margin-top:.8rem;font-size:.8rem;color:var(--text-tertiary)">
+      📖 参考：《超级清单：精力管理实用技巧、表格与自我训练》—— 把最好的精力用到最重要的事情上。
+    </p>
+  </div>
+
+  <div class="card mt-1">
+    <div class="card-title mb-1">📋 今日时段详情</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);text-align:left;color:var(--text-secondary);font-size:.78rem">
+          <th style="padding:.4rem">时段</th><th>评分</th><th>情绪</th><th>干扰因素</th><th>完成事项</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${entries.map(e => `
+          <tr style="border-bottom:1px solid var(--border-light)">
+            <td style="padding:.4rem">${e.emoji} ${e.label}<br><span style="font-size:.7rem;color:var(--text-tertiary)">${e.time}</span></td>
+            <td style="font-weight:700;color:${e.data.score>=7?'var(--accent)':e.data.score>=4?'var(--accent-warm)':'var(--red)'}">${e.data.score}</td>
+            <td>${e.data.emotion || '—'}</td>
+            <td>${(e.data.interference||[]).join('、') || '—'}</td>
+            <td>${(e.data.tasks||[]).join('、') || '—'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  $main.innerHTML = html;
+}
+
+function copySummary() {
+  const text = document.getElementById('summaryText')?.innerText;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => showToast('📋 总结已复制到剪贴板'));
+}
+
+// ==================== PANEL: HABITS ====================
+function renderHabits() {
+  const tools = APP_DATA.tools;
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Days.push(d.toISOString().slice(0,10));
+  }
+
+  const habitsHtml = tools.map(t => {
+    const daysHtml = last7Days.map(d => {
+      const done = APP_DATA.habitLog[d]?.[t.id];
+      return `<span class="habit-dot${done ? ' done' : ''}"
+                   onclick="toggleHabit('${d}','${t.id}')"
+                   title="${d}">${done ? '✓' : ''}</span>`;
+    }).join('');
+    const streak = last7Days.filter(d => APP_DATA.habitLog[d]?.[t.id]).length;
+    return `
+    <div class="habit-row">
+      <span style="font-weight:550;flex:1">${t.name}</span>
+      <span style="font-size:.72rem;color:var(--text-tertiary)">近7天 ${streak}/7</span>
+      <div class="habit-days">${daysHtml}</div>
+    </div>`;
+  }).join('');
+
+  const html = `
+  <div class="page-header">
+    <h1 class="page-title">✅ 习惯打卡</h1>
+    <span class="page-date">参考书中第四章·习惯养成</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📅 恢复动作打卡表</span>
+      <span style="font-size:.75rem;color:var(--text-tertiary)">点击圆圈打卡</span>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.5rem;padding-left:1rem">
+      <span style="flex:1;font-size:.72rem;color:var(--text-tertiary)">恢复方法</span>
+      <span style="font-size:.72rem;color:var(--text-tertiary);margin-right:.5rem">统计</span>
+      <span style="font-size:.72rem;color:var(--text-tertiary)">${last7Days.map(d => d.slice(5)).join(' ')}</span>
+    </div>
+    ${habitsHtml || '<div class="empty-state"><p>暂无恢复方法，去「恢复工具箱」添加吧</p></div>'}
+  </div>
+
+  <div class="card mt-1">
+    <div class="card-title mb-1">💡 福格习惯模型（书中第四章）</div>
+    <p style="font-size:.83rem;color:var(--text-secondary);line-height:1.8">
+      <strong>B = MAP</strong>（行为 = 动机 + 能力 + 提示）<br>
+      1. <strong>动机</strong>：明确为什么要养成这个恢复习惯<br>
+      2. <strong>能力</strong>：让行为变得简单易行（2分钟内可完成）<br>
+      3. <strong>提示</strong>：设置明确的触发信号（如饭后冥想、午休后散步）
+    </p>
+  </div>`;
+
+  $main.innerHTML = html;
+}
+
+function toggleHabit(date, toolId) {
+  if (!APP_DATA.habitLog[date]) APP_DATA.habitLog[date] = {};
+  if (APP_DATA.habitLog[date][toolId]) {
+    delete APP_DATA.habitLog[date][toolId];
+  } else {
+    APP_DATA.habitLog[date][toolId] = true;
+  }
+  saveData(APP_DATA);
+  render();
+}
+
+// ==================== MAIN RENDER ====================
+function render() {
+  switch(currentPanel) {
+    case 'record': renderRecord(); break;
+    case 'analysis': renderAnalysis(); break;
+    case 'toolbox': renderToolbox(); break;
+    case 'summary': renderSummary(); break;
+    case 'habits': renderHabits(); break;
+    default: renderRecord();
+  }
+  updateSidebarStats();
+}
+
+// ==================== PWA: Install ====================
+let deferredPrompt = null;
+const $installBanner = document.getElementById('installBanner');
+const $installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner (unless previously dismissed this session)
+  if (!sessionStorage.getItem('installDismissed')) {
+    $installBanner.classList.remove('hidden');
+  }
+});
+
+$installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log('[PWA] Install:', outcome);
+  deferredPrompt = null;
+  $installBanner.classList.add('hidden');
+});
+
+function dismissInstall() {
+  $installBanner.classList.add('hidden');
+  sessionStorage.setItem('installDismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App installed successfully');
+  $installBanner.classList.add('hidden');
+  deferredPrompt = null;
+  showToast('✅ 安装成功！');
+});
+
+// ==================== PWA: Service Worker ====================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      console.log('[SW] Registered:', reg.scope);
+
+      // Check for updates
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('[SW] New version available');
+            showToast('🔄 有新版本，刷新页面后生效');
+          }
+        });
+      });
+    }).catch((err) => {
+      console.warn('[SW] Registration failed:', err);
+    });
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  // Sidebar nav click handlers
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => switchPanel(btn.dataset.panel));
+  });
+  // Bottom nav click handlers (mobile)
+  document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => switchPanel(btn.dataset.panel));
+  });
+  render();
+  updateSidebarStats();
+});
+</script>
+</body>
+</html>
