@@ -392,6 +392,45 @@ textarea { resize: vertical; min-height: 3rem; }
 .stat-card.blue { border-left: 3px solid var(--blue); }
 .stat-card.purple { border-left: 3px solid var(--purple); }
 
+/* ========== Energy items (analysis panel) ========== */
+.energy-item {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .7rem;
+  border-radius: var(--radius-sm);
+  font-size: .82rem;
+}
+.energy-item + .energy-item { margin-top: .35rem; }
+.energy-item.high { background: var(--accent-light); }
+.energy-item.low  { background: var(--red-light); }
+.ei-time {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-size: .8rem;
+  min-width: 100px;
+}
+.ei-task {
+  flex: 1;
+  color: var(--text-secondary);
+}
+.ei-level {
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .15rem .5rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.energy-item.high .ei-level { background: var(--accent); color: #fff; }
+.energy-item.low  .ei-level { background: var(--red); color: #fff; }
+
+@media (max-width: 768px) {
+  .energy-item { padding: .5rem .6rem; font-size: .8rem; gap: .4rem; }
+  .ei-time { font-size: .76rem; min-width: 90px; }
+  .ei-level { font-size: .72rem; padding: .12rem .45rem; }
+}
+
 /* ========== Modal ========== */
 .modal-overlay {
   position: fixed; inset: 0;
@@ -1590,58 +1629,25 @@ function goToToday() {
 
 // ==================== PANEL: ANALYSIS ====================
 function renderAnalysis() {
-  const dates = Object.keys(APP_DATA.records).sort();
-  const validDates = dates.filter(d => {
-    const rec = APP_DATA.records[d];
-    return rec && Array.isArray(rec.entries) && rec.entries.length > 0;
-  });
-  const totalDays = validDates.length;
+  const rec = ensureRecord(currentDate);
+  const entries = rec.entries || [];
 
-  // Collect all entries across all days
-  const allEntries = [];
-  validDates.forEach(d => {
-    (APP_DATA.records[d].entries || []).forEach(e => allEntries.push({ ...e, date: d }));
-  });
-  const totalEntries = allEntries.length;
-  const allScores = allEntries.filter(e => e.energyLevel).map(e => levelToNum(e.energyLevel));
-  const avgScore = allScores.length ? (allScores.reduce((a,b)=>a+b,0) / allScores.length).toFixed(1) : '—';
+  // Categorize by energy level
+  const highEntries = entries.filter(e => e.energyLevel === '良好' || e.energyLevel === '舒服').sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
+  const lowEntries  = entries.filter(e => e.energyLevel === '差'   || e.energyLevel === '较差').sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
+  const normalEntries = entries.filter(e => e.energyLevel === '正常' || !e.energyLevel);
 
-  // Best and worst time periods (by preset labels)
-  const periodStats = {};
-  const presets = APP_DATA.timePresets || TIME_PRESETS;
-  presets.forEach(p => { periodStats[p.label] = []; });
-  periodStats['其他'] = [];
-
-  allEntries.forEach(e => {
-    if (!e.energyLevel) return;
-    const key = e.startTime + '-' + e.endTime;
-    let matched = false;
-    for (const p of presets) {
-      if (e.startTime === p.start && e.endTime === p.end) {
-        periodStats[p.label].push(levelToNum(e.energyLevel));
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) periodStats['其他'].push(levelToNum(e.energyLevel));
-  });
-
-  let bestPeriod = '—', worstPeriod = '—', bestAvg = 0, worstAvg = 10;
-  Object.entries(periodStats).forEach(([label, scores]) => {
-    if (scores.length >= 2) {
-      const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
-      if (avg > bestAvg) { bestAvg = avg; bestPeriod = label; }
-      if (avg < worstAvg) { worstAvg = avg; worstPeriod = label; }
-    }
-  });
-
-  // Category distribution
-  let workMin = 0, restMin = 0;
-  allEntries.forEach(e => {
-    if (e.category === '休息') restMin += (e.duration || 0);
-    else if (e.category === '工作') workMin += (e.duration || 0);
-  });
-  const totalMin = workMin + restMin;
+  // Build entry list HTML
+  function entryList(list, cls) {
+    if (list.length === 0) return `<div class="empty-state" style="padding:1.5rem">暂无记录</div>`;
+    return list.map(e => `
+      <div class="energy-item ${cls}">
+        <div class="ei-time">${e.startTime || '—'} — ${e.endTime || '—'}</div>
+        <div class="ei-task">${escHtml(e.task || '未记录事项')}</div>
+        <div class="ei-level">${e.energyLevel || '正常'}</div>
+      </div>
+    `).join('');
+  }
 
   // Daily trend (last 14 days)
   const trendLabels = [], trendData = [];
@@ -1649,78 +1655,62 @@ function renderAnalysis() {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const ds = d.toISOString().slice(0,10);
-    const entries = (APP_DATA.records[ds] || {}).entries || [];
-    const scores = entries.filter(e => e.energyLevel).map(e => levelToNum(e.energyLevel));
+    const dayEntries = (APP_DATA.records[ds] || {}).entries || [];
+    const scores = dayEntries.filter(e => e.energyLevel).map(e => levelToNum(e.energyLevel));
     trendLabels.push(ds.slice(5));
     trendData.push(scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : null);
   }
 
-  // Period average scores for bar chart
-  const periodLabels = Object.keys(periodStats).filter(k => periodStats[k].length > 0);
-  const periodData = periodLabels.map(k => {
-    const s = periodStats[k];
-    return s.length ? +(s.reduce((a,b)=>a+b,0) / s.length).toFixed(1) : 0;
-  });
-
   const html = `
   <div class="page-header">
-    <h1 class="page-title">📊 数据分析</h1>
-    <span class="page-date">基于 ${totalDays} 天 / ${totalEntries} 条记录</span>
+    <h1 class="page-title">📊 今日精力分析</h1>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
+      <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
+      <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
+    </div>
   </div>
 
   <div class="stats-row">
     <div class="stat-card accent">
-      <div class="stat-value">${avgScore}</div>
-      <div class="stat-label">平均精力评分</div>
+      <div class="stat-value">${highEntries.length}</div>
+      <div class="stat-label">🔋 高精力时段</div>
     </div>
     <div class="stat-card warm">
-      <div class="stat-value">${bestPeriod}</div>
-      <div class="stat-label">高效时段（均分 ${bestAvg.toFixed(1)}）</div>
+      <div class="stat-value">${lowEntries.length}</div>
+      <div class="stat-label">🔻 低精力时段</div>
     </div>
     <div class="stat-card blue">
-      <div class="stat-value">${workMin}分</div>
-      <div class="stat-label">累计工作时长</div>
+      <div class="stat-value">${normalEntries.length}</div>
+      <div class="stat-label">⚡ 正常时段</div>
     </div>
     <div class="stat-card purple">
-      <div class="stat-value">${worstPeriod}</div>
-      <div class="stat-label">低谷时段（均分 ${worstAvg.toFixed(1)}）</div>
+      <div class="stat-value">${entries.length}</div>
+      <div class="stat-label">📝 总记录条数</div>
     </div>
   </div>
 
   <div class="charts-row">
     <div class="card">
-      <div class="card-title mb-1">📈 精力趋势（近14天）</div>
-      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      <div class="card-title mb-1">🔋 高精力时段</div>
+      ${entryList(highEntries, 'high')}
     </div>
     <div class="card">
-      <div class="card-title mb-1">📊 各时段平均精力</div>
-      <div class="chart-wrap"><canvas id="periodChart"></canvas></div>
+      <div class="card-title mb-1">🔻 低精力时段</div>
+      ${entryList(lowEntries, 'low')}
     </div>
   </div>
 
   <div class="card mt-1">
-    <div class="card-title mb-1">📋 工作/休息统计</div>
-    <div style="display:flex;gap:2rem;align-items:center">
-      <div style="text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:var(--accent)">${workMin}</div>
-        <div style="font-size:.75rem;color:var(--text-tertiary)">工作总时长（分钟）</div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:var(--accent-warm)">${restMin}</div>
-        <div style="font-size:.75rem;color:var(--text-tertiary)">休息总时长（分钟）</div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:2rem;font-weight:700;color:var(--blue)">${totalMin > 0 ? Math.round(workMin/totalMin*100) : 0}%</div>
-        <div style="font-size:.75rem;color:var(--text-tertiary)">工作占比</div>
-      </div>
-    </div>
+    <div class="card-title mb-1">📈 精力趋势（近14天）</div>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
   </div>`;
 
   $main.innerHTML = html;
 
   setTimeout(() => {
     renderTrendChart(trendLabels, trendData);
-    renderPeriodChart(periodLabels, periodData);
   }, 50);
 }
 
@@ -1741,30 +1731,6 @@ function renderTrendChart(labels, data) {
         pointRadius: 4,
         pointBackgroundColor: '#4a7c59',
         spanGaps: false,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } },
-    },
-  });
-}
-
-function renderPeriodChart(labels, data) {
-  const ctx = document.getElementById('periodChart');
-  if (!ctx) return;
-  const colors = ['rgba(74,124,89,0.7)', 'rgba(184,117,62,0.7)', 'rgba(59,111,182,0.7)', 'rgba(124,92,191,0.7)', 'rgba(201,74,74,0.7)', 'rgba(100,160,120,0.7)'];
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: '平均精力评分',
-        data,
-        backgroundColor: labels.map((_, i) => colors[i % colors.length]),
-        borderRadius: 6,
       }],
     },
     options: {
