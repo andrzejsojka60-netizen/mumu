@@ -530,6 +530,99 @@ textarea { resize: vertical; min-height: 3rem; }
 }
 .empty-state .icon { font-size: 2.5rem; margin-bottom: .5rem; }
 
+/* ========== Sleep Panel ========== */
+.sleep-time-row {
+  display: flex; align-items: center; gap: 1rem;
+  flex-wrap: wrap;
+}
+.sleep-time-block {
+  display: flex; flex-direction: column; gap: .35rem;
+  flex: 1; min-width: 130px;
+}
+.sleep-time-block label {
+  font-size: .78rem; font-weight: 550; color: var(--text-secondary);
+}
+.sleep-time-block input[type="time"] {
+  font-size: 1.3rem; font-weight: 700; font-family: var(--font);
+  padding: .55rem .75rem; border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fafaf8;
+  color: var(--text-primary);
+  width: 100%;
+  transition: var(--transition);
+}
+.sleep-time-block input[type="time"]:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+.sleep-duration {
+  display: flex; align-items: center; justify-content: center;
+  gap: .3rem; padding: .5rem 1rem;
+  background: var(--accent-light);
+  border-radius: 20px;
+  font-size: .85rem; font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  align-self: flex-end;
+  margin-bottom: .1rem;
+}
+.sleep-duration .dur-num {
+  font-size: 1.4rem; font-weight: 700;
+}
+.sleep-quality-row {
+  display: flex; align-items: center; gap: .5rem;
+  flex-wrap: wrap;
+}
+.sleep-quality-label {
+  font-size: .82rem; font-weight: 550; color: var(--text-secondary);
+}
+.sleep-quality-opt {
+  padding: .4rem .75rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: .8rem; font-family: var(--font);
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+.sleep-quality-opt:hover { background: #f5f2ec; }
+.sleep-quality-opt.great.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sleep-quality-opt.good.active  { background: var(--blue); color: #fff; border-color: var(--blue); }
+.sleep-quality-opt.ok.active    { background: var(--accent-warm); color: #fff; border-color: var(--accent-warm); }
+.sleep-quality-opt.poor.active  { background: var(--red); color: #fff; border-color: var(--red); }
+.sleep-quality-opt.bad.active   { background: #888; color: #fff; border-color: #888; }
+
+.sleep-stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: .6rem; margin-bottom: 1rem;
+}
+.sleep-stat {
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius-md); padding: .8rem 1rem;
+  text-align: center; box-shadow: var(--shadow-sm);
+}
+.sleep-stat .ss-val { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
+.sleep-stat .ss-lbl { font-size: .72rem; color: var(--text-tertiary); margin-top: .15rem; }
+.sleep-weekly-bars {
+  display: flex; align-items: flex-end; gap: .35rem;
+  height: 100px; padding: 0 .3rem;
+}
+.sleep-weekly-bar {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: .2rem;
+}
+.sleep-weekly-bar .bar-fill {
+  width: 100%; max-width: 36px;
+  border-radius: 4px 4px 0 0;
+  transition: height .3s;
+  min-height: 4px;
+}
+.sleep-weekly-bar .bar-label {
+  font-size: .62rem; color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
 /* Utility */
 .mt-1 { margin-top: .5rem; }
 .mt-2 { margin-top: 1rem; }
@@ -893,6 +986,14 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .empty-state { padding: 2.5rem 1rem; }
   .empty-state .icon { font-size: 2.8rem; }
   .flex-between { gap: .4rem; }
+
+  /* Sleep */
+  .sleep-time-row { flex-direction: column; align-items: stretch; gap: .6rem; }
+  .sleep-duration { align-self: center; }
+  .sleep-stats-row { grid-template-columns: repeat(3, 1fr); }
+  .sleep-quality-row { gap: .35rem; }
+  .sleep-quality-opt { padding: .35rem .6rem; font-size: .76rem; min-height: 38px; }
+  .sleep-weekly-bars { height: 85px; }
 }
 
 @media (max-width: 400px) {
@@ -938,6 +1039,14 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .improve-toggle button { padding: .3rem .6rem; font-size: .72rem; min-height: 34px; }
   .modal { padding: 1.1rem; }
   .summary-task-stats { font-size: .8rem; }
+
+  /* Sleep */
+  .sleep-stats-row { grid-template-columns: repeat(3, 1fr); gap: .35rem; }
+  .sleep-stat { padding: .55rem .5rem; }
+  .sleep-stat .ss-val { font-size: 1rem; }
+  .sleep-time-block input[type="time"] { font-size: 1.1rem; padding: .45rem .6rem; }
+  .sleep-quality-opt { padding: .3rem .5rem; font-size: .7rem; min-height: 34px; }
+  .sleep-weekly-bars { height: 75px; }
 }
 </style>
 </head>
@@ -954,6 +1063,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
       <li><button class="nav-item" data-panel="record"><span class="icon">📝</span> 精力记录</button></li>
       <li><button class="nav-item" data-panel="toolbox"><span class="icon">🧰</span> 恢复工具箱</button></li>
       <li><button class="nav-item" data-panel="analysis"><span class="icon">📊</span> 数据分析</button></li>
+      <li><button class="nav-item" data-panel="sleep"><span class="icon">😴</span> 睡眠记录</button></li>
     </ul>
   </nav>
   <div class="sidebar-footer">
@@ -980,6 +1090,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   <button class="bottom-nav-item" data-panel="record"><span class="bn-icon">📝</span><span class="bn-label">记录</span></button>
   <button class="bottom-nav-item" data-panel="toolbox"><span class="bn-icon">🧰</span><span class="bn-label">工具箱</span></button>
   <button class="bottom-nav-item" data-panel="analysis"><span class="bn-icon">📊</span><span class="bn-label">分析</span></button>
+  <button class="bottom-nav-item" data-panel="sleep"><span class="bn-icon">😴</span><span class="bn-label">睡眠</span></button>
 </nav>
 
 <!-- ====== INSTALL BANNER ====== -->
@@ -1048,6 +1159,14 @@ const SELF_RATINGS = [
   { key: 'bad',   label: '差',   color: 'var(--red)' },
 ];
 
+const SLEEP_QUALITIES = [
+  { key: 'great', label: '很好', color: 'var(--accent)' },
+  { key: 'good',  label: '良好', color: 'var(--blue)' },
+  { key: 'ok',    label: '一般', color: 'var(--accent-warm)' },
+  { key: 'poor',  label: '较差', color: 'var(--red)' },
+  { key: 'bad',   label: '很差', color: '#888' },
+];
+
 const DEFAULT_EMOTIONS = ['专注','高效','平静','疲惫','焦虑','亢奋','低落','放松','紧张','满足'];
 const DEFAULT_TOOLS = [
   { id: 't1', name: '冥想呼吸法', category: '放松', desc: '闭眼深呼吸5分钟，专注一呼一吸，清空杂念。书中第五章推荐。' },
@@ -1089,6 +1208,7 @@ function migrateData(data) {
   if (!data.habitLog) data.habitLog = {};
   if (!data.timePresets) data.timePresets = [...TIME_PRESETS];
   if (!data.plans) data.plans = {};
+  if (!data.sleepLog) data.sleepLog = {};
 
   // Migrate old period-based records to new entry-based format
   const migrated = {};
@@ -1129,6 +1249,7 @@ function migrateData(data) {
   data.records = migrated;
   if (!data.timePresets) data.timePresets = [...TIME_PRESETS];
   if (!data.plans) data.plans = {};
+  if (!data.sleepLog) data.sleepLog = {};
 
   // Migrate old numeric energy → new text-based energyLevel
   for (const [date, rec] of Object.entries(data.records)) {
@@ -1156,6 +1277,7 @@ function getDefaultData() {
     customEmotions: [],
     habitLog: {},
     timePresets: [...TIME_PRESETS],
+    sleepLog: {},
   };
 }
 
@@ -1988,6 +2110,179 @@ function renderPlan() {
   `;
 }
 
+// ==================== PANEL: SLEEP ====================
+function ensureSleep(date) {
+  if (!APP_DATA.sleepLog[date]) {
+    APP_DATA.sleepLog[date] = {
+      sleepTime: '',
+      wakeTime: '',
+      quality: '',
+      note: '',
+    };
+  }
+  return APP_DATA.sleepLog[date];
+}
+
+function calcSleepDuration(sleepTime, wakeTime) {
+  if (!sleepTime || !wakeTime) return null;
+  const [sh, sm] = sleepTime.split(':').map(Number);
+  const [wh, wm] = wakeTime.split(':').map(Number);
+  let totalMin = (wh * 60 + wm) - (sh * 60 + sm);
+  if (totalMin < 0) totalMin += 24 * 60; // spans midnight
+  if (totalMin === 0) return null;
+  return { hours: Math.floor(totalMin / 60), mins: totalMin % 60, totalMin };
+}
+
+function saveSleepField(field, value) {
+  const sl = ensureSleep(currentDate);
+  sl[field] = value;
+  saveData(APP_DATA);
+  // Re-render duration section only (lightweight)
+  const dur = calcSleepDuration(sl.sleepTime, sl.wakeTime);
+  const $dur = document.getElementById('sleepDuration');
+  if ($dur) {
+    if (dur) {
+      $dur.innerHTML = `<span class="dur-num">${dur.hours}</span> 小时 <span class="dur-num">${dur.mins}</span> 分`;
+      $dur.style.display = '';
+    } else {
+      $dur.style.display = 'none';
+    }
+  }
+}
+
+function saveSleepQuality(quality) {
+  const sl = ensureSleep(currentDate);
+  sl.quality = quality;
+  saveData(APP_DATA);
+  renderSleep();
+}
+
+function saveSleepNote(note) {
+  const sl = ensureSleep(currentDate);
+  sl.note = note;
+  saveData(APP_DATA);
+}
+
+function renderSleep() {
+  const sl = ensureSleep(currentDate);
+  const dur = calcSleepDuration(sl.sleepTime, sl.wakeTime);
+
+  // Weekly stats
+  const todayDate = new Date(currentDate);
+  const weekDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(todayDate);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    const daySl = APP_DATA.sleepLog[ds];
+    const dayDur = daySl ? calcSleepDuration(daySl.sleepTime, daySl.wakeTime) : null;
+    weekDays.push({
+      date: ds,
+      label: ['日','一','二','三','四','五','六'][d.getDay()],
+      isToday: ds === currentDate,
+      sleep: daySl,
+      duration: dayDur,
+    });
+  }
+
+  // Calculate weekly average
+  const validDays = weekDays.filter(d => d.duration);
+  let avgHours = 0, avgMins = 0;
+  if (validDays.length > 0) {
+    const avgTotal = validDays.reduce((s, d) => s + d.duration.totalMin, 0) / validDays.length;
+    avgHours = Math.floor(avgTotal / 60);
+    avgMins = Math.round(avgTotal % 60);
+  }
+
+  // Quality distribution for the week
+  const qualityCounts = {};
+  weekDays.forEach(d => {
+    if (d.sleep && d.sleep.quality) {
+      qualityCounts[d.sleep.quality] = (qualityCounts[d.sleep.quality] || 0) + 1;
+    }
+  });
+
+  const weekBarsHtml = weekDays.map(d => {
+    const maxH = 80; // max bar height in px (for ~10h)
+    const h = d.duration ? Math.min(maxH, (d.duration.totalMin / (10 * 60)) * maxH) : 4;
+    const isToday = d.isToday;
+    const barColor = d.duration
+      ? (d.duration.totalMin >= 420 ? 'var(--accent)' : d.duration.totalMin >= 360 ? 'var(--blue)' : 'var(--accent-warm)')
+      : 'var(--border)';
+    return `<div class="sleep-weekly-bar">
+      <span style="font-size:.65rem;font-weight:${isToday?'700':'400'};color:${isToday?'var(--text-primary)':'var(--text-tertiary)'}">${d.duration ? d.duration.hours+'h' : '—'}</span>
+      <div class="bar-fill" style="height:${Math.max(h,4)}px;background:${barColor};opacity:${isToday?'1':'.55'}"></div>
+      <span class="bar-label" style="font-weight:${isToday?'700':'400'};color:${isToday?'var(--accent)':'var(--text-tertiary)'}">${d.label}</span>
+    </div>`;
+  }).join('');
+
+  $main.innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">😴 睡眠记录</h1>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
+        <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
+        <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
+        <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
+      </div>
+    </div>
+
+    <div class="sleep-stats-row">
+      <div class="sleep-stat">
+        <div class="ss-val">${validDays.length ? avgHours+'h '+avgMins+'min' : '—'}</div>
+        <div class="ss-lbl">📊 本周日均</div>
+      </div>
+      <div class="sleep-stat">
+        <div class="ss-val">${validDays.length}/7</div>
+        <div class="ss-lbl">📅 本周记录天数</div>
+      </div>
+      <div class="sleep-stat">
+        <div class="ss-val">${qualityCounts['很好'] || qualityCounts['良好'] || 0} 晚</div>
+        <div class="ss-lbl">⭐ 本周优质睡眠</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-1">📊 近7天睡眠时长</div>
+      <div class="sleep-weekly-bars">${weekBarsHtml}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🛏️ ${currentDate === today() ? '今晚' : ''} 睡眠记录</span>
+        <span class="sleep-duration" id="sleepDuration" style="${dur ? '' : 'display:none'}">${dur ? '<span class="dur-num">'+dur.hours+'</span> 小时 <span class="dur-num">'+dur.mins+'</span> 分' : ''}</span>
+      </div>
+      <div class="sleep-time-row">
+        <div class="sleep-time-block">
+          <label>🌙 入睡时间</label>
+          <input type="time" value="${escHtml(sl.sleepTime)}" onchange="saveSleepField('sleepTime', this.value)">
+        </div>
+        <div class="sleep-time-block">
+          <label>☀️ 起床时间</label>
+          <input type="time" value="${escHtml(sl.wakeTime)}" onchange="saveSleepField('wakeTime', this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-1">⭐ 睡眠质量</div>
+      <div class="sleep-quality-row">
+        <span class="sleep-quality-label">自评：</span>
+        ${SLEEP_QUALITIES.map(q => `
+          <button class="sleep-quality-opt ${q.key}${sl.quality===q.label?' active':''}"
+                  onclick="saveSleepQuality('${q.label}')">${q.label}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-1">📝 睡眠备注</div>
+      <textarea rows="3" placeholder="如：睡前喝了咖啡、做了冥想、半夜醒了…"
+                onchange="saveSleepNote(this.value)">${escHtml(sl.note || '')}</textarea>
+    </div>
+  `;
+}
+
 // ==================== MAIN RENDER ====================
 function render() {
   switch(currentPanel) {
@@ -1995,6 +2290,7 @@ function render() {
     case 'record': renderRecord(); break;
     case 'analysis': renderAnalysis(); break;
     case 'toolbox': renderToolbox(); break;
+    case 'sleep': renderSleep(); break;
     default: renderPlan();
   }
   updateSidebarStats();
