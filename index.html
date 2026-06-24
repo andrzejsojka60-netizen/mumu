@@ -1183,6 +1183,15 @@ const DEFAULT_TOOLS = [
 
 function generateId() { return 'e' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); }
 
+function formatDuration(minutes) {
+  if (!minutes || minutes <= 0) return '0分钟';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return h + '小时' + m + '分钟';
+  if (h > 0) return h + '小时';
+  return m + '分钟';
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1416,8 +1425,8 @@ function renderRecord() {
           <button class="cat-opt other${entry.category === '其它' ? ' active' : ''}" onclick="updateEntry('${entry.id}','category','其它')">其它</button>
         </div>
       </td>
-      <td data-label="时长(分)">
-        <input type="number" value="${entry.duration || ''}" placeholder="分钟" min="0" max="480" style="width:5em" onchange="updateEntry('${entry.id}','duration',parseInt(this.value)||0)">
+      <td data-label="时长">
+        <input type="number" value="${entry.duration || ''}" placeholder="分钟" min="0" max="480" style="width:5em" title="输入分钟数" onchange="updateEntry('${entry.id}','duration',parseInt(this.value)||0)">
       </td>
       ${isRest ? `
       <td data-label="有效性">
@@ -1469,7 +1478,7 @@ function renderRecord() {
           <th style="width:150px">时间段</th>
           <th>事项</th>
           <th style="width:80px">分类</th>
-          <th style="width:85px">时长(分钟)</th>
+          <th style="width:85px">时长</th>
           <th style="width:150px">精力评估</th>
           <th style="width:40px">操作</th>
         </tr>
@@ -1488,7 +1497,7 @@ function renderRecord() {
     ${entries.length > 0 ? `
     <div class="record-stats">
       <div class="stat-item">
-        <div class="val">${stats.workMin} 分钟</div>
+        <div class="val">${formatDuration(stats.workMin)}</div>
         <div class="lbl">📊 工作总时长</div>
       </div>
       <div class="stat-item">
@@ -1496,7 +1505,7 @@ function renderRecord() {
         <div class="lbl">📈 工作占总时间比</div>
       </div>
       <div class="stat-item warn">
-        <div class="val">${stats.restMin} 分钟</div>
+        <div class="val">${formatDuration(stats.restMin)}</div>
         <div class="lbl">☕ 休息总时长</div>
       </div>
       <div class="stat-item warn">
@@ -1674,7 +1683,7 @@ function refreshStats() {
   if (!statsEl) return;
   statsEl.innerHTML = `
     <div class="stat-item">
-      <div class="val">${stats.workMin} 分钟</div>
+      <div class="val">${formatDuration(stats.workMin)}</div>
       <div class="lbl">📊 工作总时长</div>
     </div>
     <div class="stat-item">
@@ -1682,7 +1691,7 @@ function refreshStats() {
       <div class="lbl">📈 工作占总时间比</div>
     </div>
     <div class="stat-item warn">
-      <div class="val">${stats.restMin} 分钟</div>
+      <div class="val">${formatDuration(stats.restMin)}</div>
       <div class="lbl">☕ 休息总时长</div>
     </div>
     <div class="stat-item warn">
