@@ -1231,11 +1231,6 @@ function renderRecord() {
   const entries = rec.entries || [];
   const timePresets = APP_DATA.timePresets || TIME_PRESETS;
 
-  // Preset chips
-  const presetHtml = timePresets.map((p, i) =>
-    `<button class="preset-chip" onclick="addEntryFromPreset(${i})" title="${p.start}-${p.end}">${p.label}</button>`
-  ).join('') + `<button class="preset-chip" style="border-style:dashed;opacity:.7" onclick="addCustomPreset()">+</button>`;
-
   // Table rows
   const rowsHtml = entries.map((entry, idx) => {
     const currentLevel = entry.energyLevel || '正常';
@@ -1308,12 +1303,6 @@ function renderRecord() {
   <div class="card">
     <div class="card-header">
       <span class="card-title">⏱️ 精力记录表</span>
-      <span class="card-subtitle">参考《超级清单》· 每日工作精力状况统计表</span>
-    </div>
-
-    <div class="preset-row">
-      <span style="font-size:.72rem;color:var(--text-tertiary);margin-right:.2rem;line-height:1.8">快速添加：</span>
-      ${presetHtml}
     </div>
 
     <div style="overflow-x:auto">
@@ -1329,7 +1318,7 @@ function renderRecord() {
         </tr>
       </thead>
       <tbody>
-        ${rowsHtml || `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-tertiary)">点击上方时间预设或下方按钮添加记录</td></tr>`}
+        ${rowsHtml || `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-tertiary)">点击下方按钮添加记录</td></tr>`}
       </tbody>
     </table>
     </div>
