@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-title" content="精力管理">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js">
-</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <style>
 /* ========== Reset & Variables ========== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,7 +46,7 @@
   --transition: 0.2s cubic-bezier(.4,0,.2,1);
 }
 
-html { font-size: 15px; }
+html { font-size: 15px; overscroll-behavior-y: contain; }
 body {
   font-family: var(--font);
   background: var(--bg-root);
@@ -54,6 +54,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
+  overscroll-behavior-y: contain;
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -815,12 +816,17 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
     max-width: 100%;
   }
 
-  /* Page header — better spacing */
+  /* Page header — sticky for mobile */
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: .7rem;
     margin-bottom: 1.2rem;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg-root);
+    padding: .3rem 0 .5rem;
   }
   .page-header > div { flex-wrap: wrap; gap: .4rem; }
   .page-title { font-size: 1.3rem; letter-spacing: -.01em; }
@@ -920,11 +926,12 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .record-table tr {
     background: #fdfdfc;
     border: 1px solid var(--border-light);
+    border-left: 3px solid var(--border);
     border-radius: var(--radius-md);
     margin-bottom: .8rem;
     padding: .85rem .75rem .75rem;
     position: relative;
-    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
   }
   .record-table tr:last-child { margin-bottom: .3rem; }
   .record-table td {
@@ -1296,6 +1303,23 @@ function saveData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+// 防抖保存 — 300ms 内连续调用只写一次 localStorage
+let _saveTimer = null;
+function scheduleSave(data) {
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    saveData(data);
+    _saveTimer = null;
+  }, 300);
+}
+function flushSave() {
+  if (_saveTimer) {
+    clearTimeout(_saveTimer);
+    _saveTimer = null;
+    saveData(APP_DATA);
+  }
+}
+
 let APP_DATA = loadData();
 
 function getAllEmotions() {
@@ -1334,6 +1358,7 @@ function showToast(msg) {
 }
 
 function switchPanel(panel) {
+  flushSave(); // 切换面板前确保数据已保存
   currentPanel = panel;
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   const sb = document.querySelector(`.nav-item[data-panel="${panel}"]`);
@@ -1397,6 +1422,19 @@ function resetData() {
   showToast('🗑️ 数据已清除');
 }
 
+// ==================== SHARED: DATE NAVIGATION ====================
+function dateNavHtml(title) {
+  return `<div class="page-header">
+    <h1 class="page-title">${title}</h1>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
+      <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
+      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
+      <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
+    </div>
+  </div>`;
+}
+
 // ==================== PANEL: RECORD ====================
 function renderRecord() {
   const rec = ensureRecord(currentDate);
@@ -1456,15 +1494,7 @@ function renderRecord() {
   const stats = calcDayStats(entries);
 
   const html = `
-  <div class="page-header">
-    <h1 class="page-title">📝 每日工作精力状况统计表</h1>
-    <div style="display:flex;align-items:center;gap:.5rem">
-      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
-      <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
-      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
-      <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
-    </div>
-  </div>
+  ${dateNavHtml('📝 每日工作精力状况统计表')}
 
   <div class="card">
     <div class="card-header">
@@ -1568,7 +1598,7 @@ function addEntryFromPreset(presetIdx) {
     duration: calcDuration(preset.start, preset.end),
     energyLevel: '正常', improvementMethod: '', improvementUseful: null,
   });
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
 }
 
@@ -1602,7 +1632,7 @@ function addEmptyEntry() {
 	    duration: calcDuration(start, end),
 	    energyLevel: '正常', improvementMethod: '', improvementUseful: null,
 	  });
-	  saveData(APP_DATA);
+	  scheduleSave(APP_DATA);
 	  render();
 	}
 
@@ -1623,7 +1653,7 @@ function addCustomPreset() {
   if (!label) return;
   const newPreset = { label: label.trim(), start: start.trim(), end: end.trim() };
   APP_DATA.timePresets.push(newPreset);
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   // Add entry from this new preset
   const rec = ensureRecord(currentDate);
   rec.entries.push({
@@ -1635,7 +1665,7 @@ function addCustomPreset() {
     duration: calcDuration(newPreset.start, newPreset.end),
     energyLevel: '正常', improvementMethod: '', improvementUseful: null,
   });
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
   showToast('✅ 新时间段已添加');
 }
@@ -1657,7 +1687,7 @@ function updateEntry(entryId, field, value) {
     entry.improvementUseful = null;
   }
 
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
 
   // Re-render if category changed (improvement row visibility depends on it)
   if (field === 'category') {
@@ -1672,7 +1702,7 @@ function updateEnergyLevel(entryId, level) {
   const entry = rec.entries.find(e => e.id === entryId);
   if (!entry) return;
   entry.energyLevel = level;
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
 }
 
@@ -1711,7 +1741,7 @@ function refreshStats() {
 function deleteEntry(entryId) {
   const rec = ensureRecord(currentDate);
   rec.entries = rec.entries.filter(e => e.id !== entryId);
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
 }
 
@@ -1733,11 +1763,11 @@ function toggleYesterdayNote() {
 function updateDayNote(val) {
   const rec = ensureRecord(currentDate);
   rec.note = val;
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
 }
 
 function saveRecord() {
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   updateSidebarStats();
   showToast('✅ 记录已保存');
 }
@@ -1795,15 +1825,7 @@ function renderAnalysis() {
   }
 
   const html = `
-  <div class="page-header">
-    <h1 class="page-title">📊 今日精力分析</h1>
-    <div style="display:flex;align-items:center;gap:.5rem">
-      <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
-      <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
-      <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
-      <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
-    </div>
-  </div>
+  ${dateNavHtml('📊 今日精力分析')}
 
   <div class="stats-row">
     <div class="stat-card accent">
@@ -1843,8 +1865,24 @@ function renderAnalysis() {
   $main.innerHTML = html;
 
   setTimeout(() => {
-    renderTrendChart(trendLabels, trendData);
+    ensureChartJs(() => renderTrendChart(trendLabels, trendData));
   }, 50);
+}
+
+// 按需加载 Chart.js（仅分析面板需要）
+let _chartJsPromise = null;
+function ensureChartJs(callback) {
+  if (window.Chart) { callback(); return; }
+  if (!_chartJsPromise) {
+    _chartJsPromise = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
+      script.onload = () => resolve();
+      script.onerror = () => { console.warn('[Chart.js] Failed to load'); resolve(); };
+      document.head.appendChild(script);
+    });
+  }
+  _chartJsPromise.then(callback);
 }
 
 function renderTrendChart(labels, data) {
@@ -1954,8 +1992,23 @@ function toggleHabit(date, toolId) {
   } else {
     APP_DATA.habitLog[date][toolId] = true;
   }
-  saveData(APP_DATA);
-  render();
+  scheduleSave(APP_DATA);
+
+  // Inline DOM update — toggle dot and update streak
+  const dot = document.querySelector(`[onclick*="toggleHabit('${date}','${toolId}')"]`);
+  if (dot) {
+    const done = APP_DATA.habitLog[date] && APP_DATA.habitLog[date][toolId];
+    if (done) { dot.classList.add('done'); dot.textContent = '✓'; }
+    else { dot.classList.remove('done'); dot.textContent = ''; }
+    // Update streak counter in the same row
+    const daysDiv = dot.closest('.habit-days');
+    if (daysDiv) {
+      const allDots = daysDiv.querySelectorAll('.habit-dot');
+      const streak = Array.from(allDots).filter(d => d.classList.contains('done')).length;
+      const streakSpan = daysDiv.parentElement.querySelector('span[style*="font-size:.72rem"]');
+      if (streakSpan) streakSpan.textContent = `近7天 ${streak}/7`;
+    }
+  }
 }
 
 // ==================== PLAN HELPERS ====================
@@ -1973,44 +2026,63 @@ function addPlanTask() {
   const plan = ensurePlan(currentDate);
   plan.tasks.push({ id: generateId(), text: text, done: false });
   input.value = '';
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
 }
 
 function togglePlanTask(id) {
   const plan = ensurePlan(currentDate);
   const task = plan.tasks.find(t => t.id === id);
-  if (task) {
-    task.done = !task.done;
-    saveData(APP_DATA);
-    render();
+  if (!task) return;
+  task.done = !task.done;
+  scheduleSave(APP_DATA);
+
+  // Inline DOM update — no full re-render
+  const check = document.querySelector(`[onclick*="togglePlanTask('${id}')"]`);
+  const row = check ? check.closest('.plan-task') : null;
+  if (check) {
+    if (task.done) { check.classList.add('done'); check.textContent = '✓'; }
+    else { check.classList.remove('done'); check.textContent = ''; }
   }
+  if (row) {
+    if (task.done) row.classList.add('done');
+    else row.classList.remove('done');
+  }
+  // Update counter
+  const doneCount = plan.tasks.filter(t => t.done).length;
+  const meta = document.querySelector('.plan-meta');
+  if (meta) meta.textContent = `✅ 完成: ${doneCount}/${plan.tasks.length}`;
 }
 
 function deletePlanTask(id) {
   const plan = ensurePlan(currentDate);
   plan.tasks = plan.tasks.filter(t => t.id !== id);
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
 }
 
 function savePlanNote() {
   const plan = ensurePlan(currentDate);
   plan.note = document.getElementById('planNote').value;
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   showToast('✅ 计划备注已保存');
 }
 
 function saveDaySummary() {
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   showToast('✅ 每日总结已保存');
 }
 
 function updateSelfRating(rating) {
   const plan = ensurePlan(currentDate);
-  plan.selfRating = plan.selfRating === rating ? '' : rating; // toggle off
-  saveData(APP_DATA);
-  render();
+  plan.selfRating = plan.selfRating === rating ? '' : rating;
+  scheduleSave(APP_DATA);
+
+  // Inline DOM update — toggle active class on rating buttons
+  document.querySelectorAll('.rating-opt').forEach(btn => {
+    const isActive = btn.textContent === plan.selfRating;
+    btn.classList.toggle('active', isActive);
+  });
 }
 
 function generateSummary() {
@@ -2044,7 +2116,7 @@ function generateSummary() {
   }
 
   rec.note = summary;
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   render();
 }
 
@@ -2064,15 +2136,7 @@ function renderPlan() {
   `).join('');
 
   $main.innerHTML = `
-    <div class="page-header">
-      <h1 class="page-title">📋 每日计划</h1>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
-        <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
-        <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
-        <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
-      </div>
-    </div>
+    ${dateNavHtml('📋 每日计划')}
 
     <div class="card">
       <div class="card-header">
@@ -2147,7 +2211,7 @@ function calcSleepDuration(sleepTime, wakeTime) {
 function saveSleepField(field, value) {
   const sl = ensureSleep(currentDate);
   sl[field] = value;
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
   // Re-render duration section only (lightweight)
   const dur = calcSleepDuration(sl.sleepTime, sl.wakeTime);
   const $dur = document.getElementById('sleepDuration');
@@ -2164,14 +2228,18 @@ function saveSleepField(field, value) {
 function saveSleepQuality(quality) {
   const sl = ensureSleep(currentDate);
   sl.quality = quality;
-  saveData(APP_DATA);
-  renderSleep();
+  scheduleSave(APP_DATA);
+
+  // Inline DOM update — toggle active class on quality buttons
+  document.querySelectorAll('.sleep-quality-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === sl.quality);
+  });
 }
 
 function saveSleepNote(note) {
   const sl = ensureSleep(currentDate);
   sl.note = note;
-  saveData(APP_DATA);
+  scheduleSave(APP_DATA);
 }
 
 function renderSleep() {
@@ -2228,15 +2296,7 @@ function renderSleep() {
   }).join('');
 
   $main.innerHTML = `
-    <div class="page-header">
-      <h1 class="page-title">😴 睡眠记录</h1>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <button class="btn btn-secondary btn-sm" onclick="changeDate(-1)">◀</button>
-        <input type="date" class="date-input" value="${currentDate}" onchange="jumpToDate(this.value)" title="点击选择日期">
-        <button class="btn btn-secondary btn-sm" onclick="changeDate(1)">▶</button>
-        <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
-      </div>
-    </div>
+    ${dateNavHtml('😴 睡眠记录')}
 
     <div class="sleep-stats-row">
       <div class="sleep-stat">
@@ -2437,6 +2497,10 @@ function checkForUpdates() {
 }
 
 // ==================== INIT ====================
+// 页面关闭/隐藏时确保数据已保存
+window.addEventListener('beforeunload', () => flushSave());
+window.addEventListener('pagehide', () => flushSave());
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => switchPanel(btn.dataset.panel));
