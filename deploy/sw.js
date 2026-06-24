@@ -3,7 +3,7 @@
 // 提供离线缓存、静默更新
 // ================================================================
 
-const CACHE_NAME = 'energy-manager-v5';
+const CACHE_NAME = 'energy-manager-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -41,6 +41,14 @@ self.addEventListener('activate', (event) => {
       return self.clients.claim(); // Take control of all clients
     })
   );
+});
+
+// ==================== MESSAGE ====================
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Skip waiting requested by page');
+    self.skipWaiting();
+  }
 });
 
 // ==================== FETCH ====================
