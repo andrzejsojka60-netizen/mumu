@@ -1270,17 +1270,17 @@ function renderRecord() {
                     title="${l.label}">${l.label}</button>
           `).join('')}
         </div>
-        ${currentLevel === '差' || currentLevel === '较差' ? `
+        ${entry.category === '休息' ? `
           <div class="improve-row">
-            <input type="text" placeholder="输入改善方法..."
+            <input type="text" placeholder="输入休息方式..."
                    value="${escHtml(entry.improvementMethod || '')}"
                    onchange="updateEntry('${entry.id}','improvementMethod',this.value)">
             <div class="improve-toggle">
-              <span>方法是否有用：</span>
+              <span>方式是否有效：</span>
               <button class="${entry.improvementUseful===true?'active-yes':''}"
-                      onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===true?null:true});render();">👍 有用</button>
+                      onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===true?null:true});render();">👍 有效</button>
               <button class="${entry.improvementUseful===false?'active-no':''}"
-                      onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===false?null:false});render();">👎 没用</button>
+                      onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===false?null:false});render();">👎 无效</button>
             </div>
           </div>
         ` : ''}
@@ -1495,10 +1495,21 @@ function updateEntry(entryId, field, value) {
   if (field === 'startTime' || field === 'endTime') {
     entry.duration = calcDuration(entry.startTime, entry.endTime);
   }
+
+  // Clear improvement data when switching away from "休息" category
+  if (field === 'category' && value !== '休息') {
+    entry.improvementMethod = '';
+    entry.improvementUseful = null;
+  }
+
   saveData(APP_DATA);
 
-  // Update stats live (re-render stats section)
-  refreshStats();
+  // Re-render if category changed (improvement row visibility depends on it)
+  if (field === 'category') {
+    render();
+  } else {
+    refreshStats();
+  }
 }
 
 function updateEnergyLevel(entryId, level) {
@@ -1506,13 +1517,8 @@ function updateEnergyLevel(entryId, level) {
   const entry = rec.entries.find(e => e.id === entryId);
   if (!entry) return;
   entry.energyLevel = level;
-  // Clear improvement data when switching away from poor levels
-  if (level !== '差' && level !== '较差') {
-    entry.improvementMethod = '';
-    entry.improvementUseful = null;
-  }
   saveData(APP_DATA);
-  render(); // Re-render to show/hide improvement row
+  render();
 }
 
 function refreshStats() {
