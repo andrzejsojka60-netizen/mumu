@@ -1229,12 +1229,11 @@ function resetData() {
 function renderRecord() {
   const rec = ensureRecord(currentDate);
   const entries = rec.entries || [];
-  const timePresets = APP_DATA.timePresets || TIME_PRESETS;
 
   // Table rows
   const rowsHtml = entries.map((entry, idx) => {
     const currentLevel = entry.energyLevel || '正常';
-    const energyColor = (currentLevel === '良好' || currentLevel === '舒服') ? 'var(--accent)' : (currentLevel === '差' || currentLevel === '较差') ? 'var(--red)' : 'var(--blue)';
+    const isRest = entry.category === '休息';
     return `
     <tr data-entry-id="${entry.id}">
       <td data-label="时间段">
@@ -1244,19 +1243,27 @@ function renderRecord() {
           <input type="time" value="${entry.endTime || ''}" onchange="updateEntry('${entry.id}','endTime',this.value)" title="结束时间">
         </div>
       </td>
-      <td data-label="事项">
-        <input type="text" value="${escHtml(entry.task || '')}" placeholder="如：写报告、开会、午休…" onchange="updateEntry('${entry.id}','task',this.value)">
+      <td data-label="${isRest ? '休息方式' : '事项'}">
+        <input type="text" value="${escHtml(entry.task || '')}" placeholder="${isRest ? '如：冥想、散步、小憩…' : '如：写报告、开会…'}" onchange="updateEntry('${entry.id}','task',this.value)">
       </td>
       <td data-label="分类">
         <div class="cat-toggle">
           <button class="cat-opt work${entry.category === '工作' ? ' active' : ''}" onclick="updateEntry('${entry.id}','category','工作')">工作</button>
           <button class="cat-opt rest${entry.category === '休息' ? ' active' : ''}" onclick="updateEntry('${entry.id}','category','休息')">休息</button>
-	          <button class="cat-opt other${entry.category === '其它' ? ' active' : ''}" onclick="updateEntry('${entry.id}','category','其它')">其它</button>
+          <button class="cat-opt other${entry.category === '其它' ? ' active' : ''}" onclick="updateEntry('${entry.id}','category','其它')">其它</button>
         </div>
       </td>
       <td data-label="时长(分)">
         <input type="number" value="${entry.duration || ''}" placeholder="分钟" min="0" max="480" style="width:5em" onchange="updateEntry('${entry.id}','duration',parseInt(this.value)||0)">
       </td>
+      ${isRest ? `
+      <td data-label="有效性">
+        <div class="improve-toggle" style="margin:0">
+          <button class="${entry.improvementUseful===true?'active-yes':''}" onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===true?null:true});render();">👍 有效</button>
+          <button class="${entry.improvementUseful===false?'active-no':''}" onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===false?null:false});render();">👎 无效</button>
+        </div>
+      </td>
+      ` : `
       <td data-label="精力评估">
         <div class="level-select">
           ${ENERGY_LEVELS.map(l => `
@@ -1265,21 +1272,8 @@ function renderRecord() {
                     title="${l.label}">${l.label}</button>
           `).join('')}
         </div>
-        ${entry.category === '休息' ? `
-          <div class="improve-row">
-            <input type="text" placeholder="输入休息方式..."
-                   value="${escHtml(entry.improvementMethod || '')}"
-                   onchange="updateEntry('${entry.id}','improvementMethod',this.value)">
-            <div class="improve-toggle">
-              <span>方式是否有效：</span>
-              <button class="${entry.improvementUseful===true?'active-yes':''}"
-                      onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===true?null:true});render();">👍 有效</button>
-              <button class="${entry.improvementUseful===false?'active-no':''}"
-                      onclick="updateEntry('${entry.id}','improvementUseful',${entry.improvementUseful===false?null:false});render();">👎 无效</button>
-            </div>
-          </div>
-        ` : ''}
       </td>
+      `}
       <td data-label="操作" style="text-align:center">
         <button class="btn-icon-only" onclick="deleteEntry('${entry.id}')" title="删除此行">✕</button>
       </td>
