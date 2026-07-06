@@ -1057,6 +1057,129 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .sleep-quality-opt { padding: .3rem .5rem; font-size: .7rem; min-height: 34px; }
   .sleep-weekly-bars { height: 75px; }
 }
+
+/* ========== Weekly Summary ========== */
+.week-nav-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.week-range-title {
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--text-primary);
+}
+.week-range-sub {
+  font-size: .8rem; color: var(--text-tertiary);
+  margin-top: .15rem;
+}
+.week-day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: .4rem;
+}
+.week-day-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: .6rem .5rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  font-size: .78rem;
+}
+.week-day-card.today { border-color: var(--accent); border-width: 2px; }
+.week-day-card .wd-day {
+  font-weight: 700; font-size: .72rem;
+  color: var(--text-secondary);
+  margin-bottom: .15rem;
+}
+.week-day-card.today .wd-day { color: var(--accent); }
+.week-day-card .wd-date {
+  font-size: .68rem; color: var(--text-tertiary);
+  margin-bottom: .35rem;
+}
+.week-day-card .wd-metric {
+  font-size: .7rem; color: var(--text-secondary);
+  margin: .15rem 0; line-height: 1.4;
+}
+.week-day-card .wd-metric strong { color: var(--text-primary); }
+.week-day-card .wd-energy {
+  display: inline-block;
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 2px; vertical-align: middle;
+}
+.wd-no-data { font-size: .68rem; color: var(--text-tertiary); padding: .5rem 0; }
+
+/* Weekly progress bar */
+.week-progress-bg {
+  height: 4px; background: var(--border-light);
+  border-radius: 2px; margin: .2rem 0;
+  overflow: hidden;
+}
+.week-progress-fill {
+  height: 100%; background: var(--accent);
+  border-radius: 2px; transition: width .4s;
+}
+
+/* Weekly detail rows */
+.week-detail-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+.week-detail-table th {
+  text-align: left; padding: .45rem .55rem;
+  font-size: .73rem; font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.week-detail-table td {
+  padding: .4rem .55rem; border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+.week-detail-table tr:last-child td { border-bottom: none; }
+.week-detail-table .wd-today td { background: var(--accent-light); }
+
+/* Weekly habit summary */
+.week-habit-summary {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .45rem 0; border-bottom: 1px solid var(--border-light);
+  font-size: .83rem;
+}
+.week-habit-summary:last-child { border-bottom: none; }
+.week-habit-summary .wh-name { flex: 1; font-weight: 550; }
+.week-habit-summary .wh-count { font-size: .75rem; color: var(--text-tertiary); white-space: nowrap; }
+.week-habit-summary .wh-dots { display: flex; gap: .15rem; }
+.week-habit-summary .wh-dot {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.week-habit-summary .wh-dot.done { background: var(--accent); border-color: var(--accent); }
+
+/* Weekly reflection */
+.week-reflection { margin-top: .5rem; }
+
+@media (max-width: 768px) {
+  .week-nav-header {
+    flex-direction: column; align-items: flex-start; gap: .7rem;
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg-root);
+    padding: .3rem 0 .5rem;
+    margin-bottom: 1rem;
+  }
+  .week-range-title { font-size: 1.1rem; }
+  .week-day-grid { grid-template-columns: repeat(4, 1fr); gap: .3rem; }
+  .week-day-card { padding: .5rem .35rem; }
+  .week-day-card .wd-day { font-size: .68rem; }
+  .week-day-card .wd-date { font-size: .64rem; }
+  .week-day-card .wd-metric { font-size: .66rem; }
+  .week-detail-table { font-size: .8rem; }
+  .week-detail-table th { font-size: .7rem; padding: .35rem .4rem; }
+  .week-detail-table td { padding: .35rem .4rem; }
+  .week-habit-summary { font-size: .8rem; gap: .35rem; }
+  .week-habit-summary .wh-dot { width: 18px; height: 18px; }
+}
+
+@media (max-width: 400px) {
+  .week-day-grid { grid-template-columns: repeat(3, 1fr); gap: .25rem; }
+  .week-day-card { padding: .4rem .25rem; }
+  .week-range-title { font-size: 1rem; }
+}
 </style>
 </head>
 <body>
@@ -1073,6 +1196,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
       <li><button class="nav-item" data-panel="toolbox"><span class="icon">🧰</span> 恢复工具箱</button></li>
       <li><button class="nav-item" data-panel="analysis"><span class="icon">📊</span> 数据分析</button></li>
       <li><button class="nav-item" data-panel="sleep"><span class="icon">😴</span> 睡眠记录</button></li>
+      <li><button class="nav-item" data-panel="weekly"><span class="icon">📈</span> 每周总结</button></li>
     </ul>
   </nav>
   <div class="sidebar-footer">
@@ -1100,6 +1224,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   <button class="bottom-nav-item" data-panel="toolbox"><span class="bn-icon">🧰</span><span class="bn-label">工具箱</span></button>
   <button class="bottom-nav-item" data-panel="analysis"><span class="bn-icon">📊</span><span class="bn-label">分析</span></button>
   <button class="bottom-nav-item" data-panel="sleep"><span class="bn-icon">😴</span><span class="bn-label">睡眠</span></button>
+  <button class="bottom-nav-item" data-panel="weekly"><span class="bn-icon">📈</span><span class="bn-label">总结</span></button>
 </nav>
 
 <!-- ====== INSTALL BANNER ====== -->
@@ -1227,6 +1352,7 @@ function migrateData(data) {
   if (!data.timePresets) data.timePresets = [...TIME_PRESETS];
   if (!data.plans) data.plans = {};
   if (!data.sleepLog) data.sleepLog = {};
+  if (!data.weeklyNotes) data.weeklyNotes = {};
 
   // Migrate old period-based records to new entry-based format
   const migrated = {};
@@ -1268,6 +1394,7 @@ function migrateData(data) {
   if (!data.timePresets) data.timePresets = [...TIME_PRESETS];
   if (!data.plans) data.plans = {};
   if (!data.sleepLog) data.sleepLog = {};
+  if (!data.weeklyNotes) data.weeklyNotes = {};
 
   // Migrate old numeric energy → new text-based energyLevel
   for (const [date, rec] of Object.entries(data.records)) {
@@ -1296,6 +1423,7 @@ function getDefaultData() {
     habitLog: {},
     timePresets: [...TIME_PRESETS],
     sleepLog: {},
+    weeklyNotes: {},
   };
 }
 
@@ -2354,6 +2482,317 @@ function renderSleep() {
   `;
 }
 
+// ==================== WEEKLY SUMMARY ====================
+function getWeekRange(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay(); // 0=Sun
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const dd = new Date(mon);
+    dd.setDate(mon.getDate() + i);
+    days.push(dd.toISOString().slice(0, 10));
+  }
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  return {
+    monday: mon.toISOString().slice(0, 10),
+    sunday: sun.toISOString().slice(0, 10),
+    days,
+    key: mon.toISOString().slice(0, 10),
+  };
+}
+
+function formatWeekLabel(monday, sunday) {
+  const fmt = (ds) => {
+    const d = new Date(ds + 'T00:00:00');
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  };
+  return fmt(monday) + ' — ' + fmt(sunday);
+}
+
+function changeWeek(delta) {
+  const d = new Date(currentDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta * 7);
+  currentDate = d.toISOString().slice(0, 10);
+  render();
+}
+
+function goToThisWeek() {
+  currentDate = today();
+  render();
+}
+
+function saveWeeklyNote() {
+  const week = getWeekRange(currentDate);
+  const textarea = document.getElementById('weeklyNoteInput');
+  if (textarea) {
+    APP_DATA.weeklyNotes[week.key] = textarea.value;
+    scheduleSave(APP_DATA);
+    showToast('✅ 每周反思已保存');
+  }
+}
+
+function renderWeekly() {
+  const week = getWeekRange(currentDate);
+  const isCurrentWeek = week.days.includes(today());
+
+  // Collect daily data
+  const dayData = week.days.map(ds => {
+    const rec = APP_DATA.records[ds];
+    const entries = (rec && rec.entries) ? rec.entries : [];
+    const plan = APP_DATA.plans[ds];
+    const tasks = (plan && plan.tasks) ? plan.tasks : [];
+    const doneTasks = tasks.filter(t => t.done).length;
+    const sl = APP_DATA.sleepLog[ds];
+    const sleepDur = sl ? calcSleepDuration(sl.sleepTime, sl.wakeTime) : null;
+
+    // Work/rest duration
+    let workMin = 0, restMin = 0;
+    const energyScores = [];
+    entries.forEach(e => {
+      if (e.category === '休息') restMin += (e.duration || 0);
+      else if (e.category === '工作') workMin += (e.duration || 0);
+      if (e.energyLevel) energyScores.push(levelToNum(e.energyLevel));
+    });
+    const avgEnergy = energyScores.length > 0
+      ? (energyScores.reduce((a,b) => a+b, 0) / energyScores.length) : null;
+
+    const isToday = ds === today();
+    const weekday = ['日','一','二','三','四','五','六'][new Date(ds + 'T00:00:00').getDay()];
+
+    return { ds, isToday, weekday, entries, workMin, restMin, avgEnergy, tasks, doneTasks, sleepDur, sl };
+  });
+
+  // Aggregate stats
+  const totalWorkMin = dayData.reduce((s, d) => s + d.workMin, 0);
+  const totalRestMin = dayData.reduce((s, d) => s + d.restMin, 0);
+  const allScores = dayData.filter(d => d.avgEnergy !== null).map(d => d.avgEnergy);
+  const avgEnergyWeek = allScores.length > 0 ? (allScores.reduce((a,b)=>a+b,0) / allScores.length) : null;
+  const totalTasks = dayData.reduce((s, d) => s + d.tasks.length, 0);
+  const totalDone = dayData.reduce((s, d) => s + d.doneTasks, 0);
+  const sleepDays = dayData.filter(d => d.sleepDur);
+  const avgSleepMin = sleepDays.length > 0
+    ? sleepDays.reduce((s, d) => s + d.sleepDur.totalMin, 0) / sleepDays.length : null;
+
+  // Weekly day cards (mini overview grid)
+  const dayCardsHtml = dayData.map(d => {
+    const cls = d.isToday ? ' today' : '';
+    const dateShort = d.ds.slice(5); // MM-DD
+    const workStr = d.workMin > 0 ? formatDuration(d.workMin) : '—';
+    const sleepStr = d.sleepDur ? d.sleepDur.hours + 'h' + d.sleepDur.mins + 'min' : '—';
+    let energyColor = 'var(--text-tertiary)';
+    if (d.avgEnergy !== null) {
+      if (d.avgEnergy >= 7.5) energyColor = 'var(--accent)';
+      else if (d.avgEnergy >= 5.5) energyColor = 'var(--blue)';
+      else if (d.avgEnergy >= 3.5) energyColor = 'var(--accent-warm)';
+      else energyColor = 'var(--red)';
+    }
+    const energyStr = d.avgEnergy !== null ? d.avgEnergy.toFixed(1) : '—';
+    const taskStr = d.tasks.length > 0 ? d.doneTasks + '/' + d.tasks.length : '—';
+    return `<div class="week-day-card${cls}">
+      <div class="wd-day">周${d.weekday}</div>
+      <div class="wd-date">${dateShort}</div>
+      <div class="wd-metric">💼 ${workStr}</div>
+      <div class="wd-metric"><span class="wd-energy" style="background:${energyColor}"></span> ${energyStr}</div>
+      <div class="wd-metric">✅ ${taskStr}</div>
+      <div class="wd-metric">😴 ${sleepStr}</div>
+    </div>`;
+  }).join('');
+
+  // Daily detail table
+  const detailRowsHtml = dayData.map(d => {
+    const cls = d.isToday ? ' class="wd-today"' : '';
+    const workStr = d.workMin > 0 ? formatDuration(d.workMin) : '—';
+    const restStr = d.restMin > 0 ? formatDuration(d.restMin) : '—';
+    let energyStr = '—';
+    if (d.avgEnergy !== null) {
+      const lvl = d.avgEnergy >= 7.5 ? '🟢' : d.avgEnergy >= 5.5 ? '🔵' : d.avgEnergy >= 3.5 ? '🟠' : '🔴';
+      energyStr = lvl + ' ' + d.avgEnergy.toFixed(1);
+    }
+    const taskStr = d.tasks.length > 0 ? `${d.doneTasks}/${d.tasks.length} (${Math.round(d.doneTasks/d.tasks.length*100)}%)` : '—';
+    const sleepStr = d.sleepDur ? d.sleepDur.hours + 'h' + d.sleepDur.mins + 'min' : '—';
+    const dateLabel = d.ds.slice(5) + ' 周' + d.weekday;
+    return `<tr${cls}>
+      <td>${dateLabel}${d.isToday ? ' 🔆' : ''}</td>
+      <td>${workStr}</td>
+      <td>${restStr}</td>
+      <td>${energyStr}</td>
+      <td>${taskStr}</td>
+      <td>${sleepStr}</td>
+    </tr>`;
+  }).join('');
+
+  // Habit summary
+  const habitRowsHtml = APP_DATA.tools.map(t => {
+    const weekDots = week.days.map(ds => {
+      const done = APP_DATA.habitLog[ds] && APP_DATA.habitLog[ds][t.id];
+      return `<span class="wh-dot${done ? ' done' : ''}" title="${ds}"></span>`;
+    }).join('');
+    const weekCount = week.days.filter(ds => APP_DATA.habitLog[ds] && APP_DATA.habitLog[ds][t.id]).length;
+    return `<div class="week-habit-summary">
+      <span class="wh-name">${t.name}</span>
+      <span class="wh-count">${weekCount}/7 天</span>
+      <span class="wh-dots">${weekDots}</span>
+    </div>`;
+  }).join('');
+
+  // Charts data
+  const chartLabels = week.days.map(ds => ds.slice(5));
+  const energyData = dayData.map(d => d.avgEnergy);
+  const workData = dayData.map(d => d.workMin > 0 ? +(d.workMin / 60).toFixed(1) : null);
+  const sleepData = dayData.map(d => d.sleepDur ? +(d.sleepDur.totalMin / 60).toFixed(1) : null);
+
+  const weekLabel = formatWeekLabel(week.monday, week.sunday);
+  const note = APP_DATA.weeklyNotes[week.key] || '';
+
+  $main.innerHTML = `
+    <div class="week-nav-header">
+      <div>
+        <div class="week-range-title">📈 每周总结</div>
+        <div class="week-range-sub">${weekLabel}${isCurrentWeek ? ' （本周）' : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">◀ 上一周</button>
+        <button class="btn btn-secondary btn-sm" onclick="goToThisWeek()">本周</button>
+        <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下一周 ▶</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card accent">
+        <div class="stat-value">${formatDuration(totalWorkMin)}</div>
+        <div class="stat-label">📊 工作总时长</div>
+      </div>
+      <div class="stat-card warm">
+        <div class="stat-value">${avgEnergyWeek !== null ? avgEnergyWeek.toFixed(1) : '—'}</div>
+        <div class="stat-label">⚡ 日均精力评分</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-value">${avgSleepMin !== null ? Math.floor(avgSleepMin/60)+'h'+Math.round(avgSleepMin%60)+'min' : '—'}</div>
+        <div class="stat-label">😴 平均睡眠时长</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-value">${totalTasks > 0 ? Math.round(totalDone/totalTasks*100)+'%' : '—'}</div>
+        <div class="stat-label">✅ 任务完成率（${totalDone}/${totalTasks}）</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-1">📅 每日概览</div>
+      <div class="week-day-grid">${dayCardsHtml}</div>
+    </div>
+
+    <div class="card mt-1">
+      <div class="card-title mb-1">📋 每日详情</div>
+      <div style="overflow-x:auto">
+      <table class="week-detail-table">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>工作时长</th>
+            <th>休息时长</th>
+            <th>精力评分</th>
+            <th>任务完成</th>
+            <th>睡眠</th>
+          </tr>
+        </thead>
+        <tbody>${detailRowsHtml}</tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="charts-row mt-1">
+      <div class="card">
+        <div class="card-title mb-1">📈 精力趋势</div>
+        <div class="chart-wrap"><canvas id="weekEnergyChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title mb-1">⏱️ 工作时长 & 睡眠时长</div>
+        <div class="chart-wrap"><canvas id="weekDurationChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card mt-1">
+      <div class="card-title mb-1">🎯 习惯打卡汇总</div>
+      ${habitRowsHtml || '<div class="empty-state"><p>暂无恢复方法</p></div>'}
+    </div>
+
+    <div class="card mt-1">
+      <div class="card-title mb-1">📝 每周反思</div>
+      <div class="week-reflection">
+        <textarea id="weeklyNoteInput" rows="4" placeholder="写下本周的反思：哪些做得好？哪些需要改进？下周的目标是什么？...">${escHtml(note)}</textarea>
+        <button class="btn btn-primary btn-sm mt-1" onclick="saveWeeklyNote()">💾 保存反思</button>
+      </div>
+    </div>
+  `;
+
+  // Render charts
+  setTimeout(() => {
+    ensureChartJs(() => {
+      // Energy trend chart
+      const eCtx = document.getElementById('weekEnergyChart');
+      if (eCtx) {
+        new Chart(eCtx, {
+          type: 'line',
+          data: {
+            labels: chartLabels,
+            datasets: [{
+              label: '日均精力',
+              data: energyData,
+              borderColor: '#4a7c59',
+              backgroundColor: 'rgba(74,124,89,0.08)',
+              fill: true, tension: 0.4,
+              pointRadius: 5, pointBackgroundColor: '#4a7c59',
+              spanGaps: false,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } },
+          },
+        });
+      }
+
+      // Duration chart (work + sleep bars)
+      const dCtx = document.getElementById('weekDurationChart');
+      if (dCtx) {
+        new Chart(dCtx, {
+          type: 'bar',
+          data: {
+            labels: chartLabels,
+            datasets: [
+              {
+                label: '工作时长(h)',
+                data: workData,
+                backgroundColor: 'rgba(74,124,89,0.6)',
+                borderColor: '#4a7c59',
+                borderWidth: 1,
+                borderRadius: 4,
+              },
+              {
+                label: '睡眠时长(h)',
+                data: sleepData,
+                backgroundColor: 'rgba(59,111,182,0.5)',
+                borderColor: '#3b6fb6',
+                borderWidth: 1,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 11 } } } },
+            scales: { y: { beginAtZero: true, title: { display: true, text: '小时', font: { size: 10 } } } },
+          },
+        });
+      }
+    });
+  }, 50);
+}
+
 // ==================== MAIN RENDER ====================
 function render() {
   switch(currentPanel) {
@@ -2362,6 +2801,7 @@ function render() {
     case 'analysis': renderAnalysis(); break;
     case 'toolbox': renderToolbox(); break;
     case 'sleep': renderSleep(); break;
+    case 'weekly': renderWeekly(); break;
     default: renderPlan();
   }
   updateSidebarStats();
