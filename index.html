@@ -1194,7 +1194,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
       <li><button class="nav-item active" data-panel="plan"><span class="icon">📋</span> 每日计划</button></li>
       <li><button class="nav-item" data-panel="record"><span class="icon">📝</span> 精力记录</button></li>
       <li><button class="nav-item" data-panel="toolbox"><span class="icon">🧰</span> 恢复工具箱</button></li>
-      <li><button class="nav-item" data-panel="analysis"><span class="icon">📊</span> 数据分析</button></li>
       <li><button class="nav-item" data-panel="sleep"><span class="icon">😴</span> 睡眠记录</button></li>
       <li><button class="nav-item" data-panel="weekly"><span class="icon">📈</span> 每周总结</button></li>
     </ul>
@@ -1222,7 +1221,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   <button class="bottom-nav-item active" data-panel="plan"><span class="bn-icon">📋</span><span class="bn-label">计划</span></button>
   <button class="bottom-nav-item" data-panel="record"><span class="bn-icon">📝</span><span class="bn-label">记录</span></button>
   <button class="bottom-nav-item" data-panel="toolbox"><span class="bn-icon">🧰</span><span class="bn-label">工具箱</span></button>
-  <button class="bottom-nav-item" data-panel="analysis"><span class="bn-icon">📊</span><span class="bn-label">分析</span></button>
   <button class="bottom-nav-item" data-panel="sleep"><span class="bn-icon">😴</span><span class="bn-label">睡眠</span></button>
   <button class="bottom-nav-item" data-panel="weekly"><span class="bn-icon">📈</span><span class="bn-label">总结</span></button>
 </nav>
@@ -1918,86 +1916,7 @@ function goToToday() {
   render();
 }
 
-// ==================== PANEL: ANALYSIS ====================
-function renderAnalysis() {
-  const rec = ensureRecord(currentDate);
-  const entries = rec.entries || [];
-
-  // Categorize by energy level
-  const highEntries = entries.filter(e => e.energyLevel === '良好' || e.energyLevel === '舒服').sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
-  const lowEntries  = entries.filter(e => e.energyLevel === '差'   || e.energyLevel === '较差').sort((a,b) => (a.startTime||'').localeCompare(b.startTime||''));
-  const normalEntries = entries.filter(e => e.energyLevel === '正常' || !e.energyLevel);
-
-  // Build entry list HTML
-  function entryList(list, cls) {
-    if (list.length === 0) return `<div class="empty-state" style="padding:1.5rem">暂无记录</div>`;
-    return list.map(e => `
-      <div class="energy-item ${cls}">
-        <div class="ei-time">${e.startTime || '—'} — ${e.endTime || '—'}</div>
-        <div class="ei-task">${escHtml(e.task || '未记录事项')}</div>
-        <div class="ei-level">${e.energyLevel || '正常'}</div>
-      </div>
-    `).join('');
-  }
-
-  // Daily trend (last 14 days)
-  const trendLabels = [], trendData = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0,10);
-    const dayEntries = (APP_DATA.records[ds] || {}).entries || [];
-    const scores = dayEntries.filter(e => e.energyLevel).map(e => levelToNum(e.energyLevel));
-    trendLabels.push(ds.slice(5));
-    trendData.push(scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : null);
-  }
-
-  const html = `
-  ${dateNavHtml('📊 今日精力分析')}
-
-  <div class="stats-row">
-    <div class="stat-card accent">
-      <div class="stat-value">${highEntries.length}</div>
-      <div class="stat-label">🔋 高精力时段</div>
-    </div>
-    <div class="stat-card warm">
-      <div class="stat-value">${lowEntries.length}</div>
-      <div class="stat-label">🔻 低精力时段</div>
-    </div>
-    <div class="stat-card blue">
-      <div class="stat-value">${normalEntries.length}</div>
-      <div class="stat-label">⚡ 正常时段</div>
-    </div>
-    <div class="stat-card purple">
-      <div class="stat-value">${entries.length}</div>
-      <div class="stat-label">📝 总记录条数</div>
-    </div>
-  </div>
-
-  <div class="charts-row">
-    <div class="card">
-      <div class="card-title mb-1">🔋 高精力时段</div>
-      ${entryList(highEntries, 'high')}
-    </div>
-    <div class="card">
-      <div class="card-title mb-1">🔻 低精力时段</div>
-      ${entryList(lowEntries, 'low')}
-    </div>
-  </div>
-
-  <div class="card mt-1">
-    <div class="card-title mb-1">📈 精力趋势（近14天）</div>
-    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
-  </div>`;
-
-  $main.innerHTML = html;
-
-  setTimeout(() => {
-    ensureChartJs(() => renderTrendChart(trendLabels, trendData));
-  }, 50);
-}
-
-// 按需加载 Chart.js（仅分析面板需要）
+// Chart.js lazy loader (used by weekly summary panel)
 let _chartJsPromise = null;
 function ensureChartJs(callback) {
   if (window.Chart) { callback(); return; }
@@ -2011,34 +1930,6 @@ function ensureChartJs(callback) {
     });
   }
   _chartJsPromise.then(callback);
-}
-
-function renderTrendChart(labels, data) {
-  const ctx = document.getElementById('trendChart');
-  if (!ctx) return;
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: '日均精力评分',
-        data,
-        borderColor: '#4a7c59',
-        backgroundColor: 'rgba(74,124,89,0.08)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#4a7c59',
-        spanGaps: false,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } },
-    },
-  });
 }
 
 // ==================== PANEL: TOOLBOX & HABITS ====================
@@ -2638,11 +2529,22 @@ function renderWeekly() {
     </div>`;
   }).join('');
 
-  // Charts data
+  // Charts data — bar chart uses week days, line chart uses 14-day trend
   const chartLabels = week.days.map(ds => ds.slice(5));
-  const energyData = dayData.map(d => d.avgEnergy);
   const workData = dayData.map(d => d.workMin > 0 ? +(d.workMin / 60).toFixed(1) : null);
   const sleepData = dayData.map(d => d.sleepDur ? +(d.sleepDur.totalMin / 60).toFixed(1) : null);
+
+  // 14-day energy trend (from analysis panel)
+  const trendLabels = [], trendData = [];
+  for (let i = 13; i >= 0; i--) {
+    const td = new Date();
+    td.setDate(td.getDate() - i);
+    const tds = td.toISOString().slice(0,10);
+    const dayEntries = (APP_DATA.records[tds] || {}).entries || [];
+    const scores = dayEntries.filter(e => e.energyLevel).map(e => levelToNum(e.energyLevel));
+    trendLabels.push(tds.slice(5));
+    trendData.push(scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : null);
+  }
 
   const weekLabel = formatWeekLabel(week.monday, week.sunday);
   const note = APP_DATA.weeklyNotes[week.key] || '';
@@ -2705,8 +2607,8 @@ function renderWeekly() {
 
     <div class="charts-row mt-1">
       <div class="card">
-        <div class="card-title mb-1">📈 精力趋势</div>
-        <div class="chart-wrap"><canvas id="weekEnergyChart"></canvas></div>
+        <div class="card-title mb-1">📈 精力趋势（近14天）</div>
+        <div class="chart-wrap"><canvas id="weekTrendChart"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title mb-1">⏱️ 工作时长 & 睡眠时长</div>
@@ -2731,20 +2633,20 @@ function renderWeekly() {
   // Render charts
   setTimeout(() => {
     ensureChartJs(() => {
-      // Energy trend chart
-      const eCtx = document.getElementById('weekEnergyChart');
+      // 14-day energy trend chart
+      const eCtx = document.getElementById('weekTrendChart');
       if (eCtx) {
         new Chart(eCtx, {
           type: 'line',
           data: {
-            labels: chartLabels,
+            labels: trendLabels,
             datasets: [{
-              label: '日均精力',
-              data: energyData,
+              label: '日均精力评分',
+              data: trendData,
               borderColor: '#4a7c59',
               backgroundColor: 'rgba(74,124,89,0.08)',
               fill: true, tension: 0.4,
-              pointRadius: 5, pointBackgroundColor: '#4a7c59',
+              pointRadius: 4, pointBackgroundColor: '#4a7c59',
               spanGaps: false,
             }],
           },
@@ -2798,7 +2700,6 @@ function render() {
   switch(currentPanel) {
     case 'plan': renderPlan(); break;
     case 'record': renderRecord(); break;
-    case 'analysis': renderAnalysis(); break;
     case 'toolbox': renderToolbox(); break;
     case 'sleep': renderSleep(); break;
     case 'weekly': renderWeekly(); break;
