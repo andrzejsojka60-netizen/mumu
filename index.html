@@ -169,7 +169,6 @@ body {
   color: var(--text-primary);
   display: flex; align-items: center; gap: .4rem;
 }
-.card-subtitle { font-size: .8rem; color: var(--text-tertiary); }
 .yesterday-btn {
   font-size: .7rem; padding: .15rem .5rem;
   border-radius: 10px; border: 1px solid var(--border);
@@ -333,7 +332,6 @@ textarea { resize: vertical; min-height: 3rem; }
 .btn-warm { background: var(--accent-warm-light); color: var(--accent-warm); }
 .btn-warm:hover { background: #f8e4cf; }
 .btn-sm { padding: .3rem .65rem; font-size: .75rem; }
-.btn-icon { padding: .3rem .5rem; }
 .btn-danger { color: var(--red); border-color: var(--red-light); background: #fff; }
 .btn-danger:hover { background: var(--red-light); }
 .btn-xs { padding: .2rem .45rem; font-size: .7rem; border-radius: 4px; }
@@ -392,43 +390,6 @@ textarea { resize: vertical; min-height: 3rem; }
 .stat-card.warm { border-left: 3px solid var(--accent-warm); }
 .stat-card.blue { border-left: 3px solid var(--blue); }
 .stat-card.purple { border-left: 3px solid var(--purple); }
-
-/* ========== Energy items (analysis panel) ========== */
-.energy-item {
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-  padding: .55rem .7rem;
-  border-radius: var(--radius-sm);
-  font-size: .82rem;
-}
-.energy-item + .energy-item { margin-top: .35rem; }
-.energy-item.high { background: var(--accent-light); }
-.energy-item.low  { background: var(--red-light); }
-.ei-time {
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  font-size: .8rem;
-  min-width: 100px;
-}
-.ei-task {
-  flex: 1;
-  color: var(--text-secondary);
-}
-.ei-level {
-  font-size: .75rem;
-  font-weight: 600;
-  padding: .15rem .5rem;
-  border-radius: 10px;
-  white-space: nowrap;
-}
-.energy-item.high .ei-level { background: var(--accent); color: #fff; }
-.energy-item.low  .ei-level { background: var(--red); color: #fff; }
-
-@media (max-width: 768px) {
-  .energy-item { padding: .5rem .6rem; font-size: .8rem; gap: .4rem; }
-  .ei-time { font-size: .76rem; min-width: 90px; }
   .ei-level { font-size: .72rem; padding: .12rem .45rem; }
 }
 
@@ -626,11 +587,9 @@ textarea { resize: vertical; min-height: 3rem; }
 
 /* Utility */
 .mt-1 { margin-top: .5rem; }
-.mt-2 { margin-top: 1rem; }
 .mb-1 { margin-bottom: .5rem; }
 .hidden { display: none !important; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
-.gap-sm { gap: .5rem; }
 
 /* Global touch optimization — eliminate 300ms delay, prevent callout */
 button, .btn, .nav-item, .bottom-nav-item, .preset-chip,
@@ -712,14 +671,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 .level-opt.good.active      { background: var(--accent);      border-color: var(--accent); }
 .level-opt.great.active     { background: #2d5a3e;            border-color: #2d5a3e; }
 
-/* ========== Improvement Method Row ========== */
-.improve-row {
-  margin-top: .4rem; padding: .5rem .6rem;
-  background: var(--red-light); border-radius: var(--radius-sm);
-  display: flex; flex-direction: column; gap: .4rem;
-}
-.improve-row input { font-size: .78rem; padding: .3rem .5rem; }
-.improve-toggle { display: flex; gap: .5rem; align-items: center; font-size: .75rem; }
 .improve-toggle button {
   padding: .2rem .6rem; border-radius: 12px; border: 1.5px solid var(--border);
   background: #fff; cursor: pointer; font-size: .72rem; font-family: var(--font);
@@ -934,14 +885,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .record-table input[type="text"],
   .record-table input[type="number"] { font-size: .84rem; padding: .45rem .5rem; }
 
-  /* Improvement row — clearer visual */
-  .improve-row {
-    margin-top: .35rem; padding: .5rem .6rem;
-    width: 100%; border-radius: var(--radius-sm);
-    background: #fef5f5;
-    border: 1px solid #fde2e2;
-  }
-  .improve-row input { font-size: .84rem; padding: .4rem .55rem; }
   .improve-toggle { gap: .4rem; }
   .improve-toggle button { padding: .35rem .75rem; font-size: .78rem; min-height: 38px; border-radius: 12px; }
   .record-table td .level-select { flex-wrap: wrap; gap: .3rem; }
@@ -1016,7 +959,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .level-select { gap: .25rem; }
   .yesterday-btn { padding: .3rem .6rem; font-size: .74rem; min-height: 36px; }
   .generate-btn { padding: .5rem .9rem; font-size: .8rem; }
-  .improve-row { padding: .4rem .5rem; }
   .improve-toggle button { padding: .3rem .6rem; font-size: .72rem; min-height: 34px; }
   .modal { padding: 1.1rem; }
   .summary-task-stats { font-size: .8rem; }
@@ -1342,11 +1284,6 @@ function migrateData(data) {
     }
   }
   data.records = migrated;
-  if (!data.timePresets) data.timePresets = [...TIME_PRESETS];
-  if (!data.plans) data.plans = {};
-  if (!data.sleepLog) data.sleepLog = {};
-  if (!data.weeklyNotes) data.weeklyNotes = {};
-
   // Migrate old numeric energy → new text-based energyLevel
   for (const [date, rec] of Object.entries(data.records)) {
     if (rec.entries) {
@@ -1492,7 +1429,7 @@ function importData(input) {
 
 function resetData() {
   if (!confirm('⚠️ 确定要清除全部数据吗？\n此操作不可恢复！建议先导出备份。')) return;
-  if (!confirm('再次确认：清除所有精力记录和自定义工具？')) return;
+  if (!confirm('再次确认：清除所有数据（记录、计划、工具、睡眠、笔记等）？')) return;
   APP_DATA = getDefaultData();
   saveData(APP_DATA);
   currentDate = today();
@@ -1663,23 +1600,6 @@ function calcDayStats(entries) {
 }
 
 // ==================== RECORD ACTIONS ====================
-function addEntryFromPreset(presetIdx) {
-  const preset = (APP_DATA.timePresets || TIME_PRESETS)[presetIdx];
-  if (!preset) return;
-  const rec = ensureRecord(currentDate);
-  rec.entries.push({
-    id: generateId(),
-    startTime: preset.start,
-    endTime: preset.end,
-    task: '',
-    category: '工作',
-    duration: calcDuration(preset.start, preset.end),
-    energyLevel: '正常', improvementMethod: '', improvementUseful: null,
-  });
-  scheduleSave(APP_DATA);
-  render();
-}
-
 function calcDuration(start, end) {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(':').map(Number);
@@ -1722,32 +1642,6 @@ function addEmptyEntry() {
 	  const nm = total % 60;
 	  return String(nh).padStart(2, '0') + ':' + String(nm).padStart(2, '0');
 	}
-function addCustomPreset() {
-  const start = prompt('请输入开始时间（如 06:00）：', '09:00');
-  if (!start) return;
-  const end = prompt('请输入结束时间（如 09:30）：', '10:00');
-  if (!end) return;
-  const label = prompt('请输入标签名称（如 晨间阅读）：', `${start}-${end}`);
-  if (!label) return;
-  const newPreset = { label: label.trim(), start: start.trim(), end: end.trim() };
-  APP_DATA.timePresets.push(newPreset);
-  scheduleSave(APP_DATA);
-  // Add entry from this new preset
-  const rec = ensureRecord(currentDate);
-  rec.entries.push({
-    id: generateId(),
-    startTime: newPreset.start,
-    endTime: newPreset.end,
-    task: '',
-    category: '工作',
-    duration: calcDuration(newPreset.start, newPreset.end),
-    energyLevel: '正常', improvementMethod: '', improvementUseful: null,
-  });
-  scheduleSave(APP_DATA);
-  render();
-  showToast('✅ 新时间段已添加');
-}
-
 function updateEntry(entryId, field, value) {
   const rec = ensureRecord(currentDate);
   const entry = rec.entries.find(e => e.id === entryId);
@@ -1871,6 +1765,7 @@ function goToToday() {
 // Chart.js lazy loader (used by weekly summary panel)
 let _chartJsPromise = null;
 function ensureChartJs(callback) {
+let _chartInstances = [];
   if (window.Chart) { callback(); return; }
   if (!_chartJsPromise) {
     _chartJsPromise = new Promise((resolve) => {
@@ -1884,7 +1779,7 @@ function ensureChartJs(callback) {
   _chartJsPromise.then(callback);
 }
 
-// ==================== PANEL: TOOLBOX & HABITS ====================
+// ==================== PANEL: TOOLBOX ====================
 function renderToolbox() {
 	  const toolsHtml = APP_DATA.tools.map(t => `
 	    <div class="tool-card">
@@ -1919,6 +1814,46 @@ function renderToolbox() {
 
 	  $main.innerHTML = html;
 	}
+
+
+// ==================== TOOLBOX ACTIONS ====================
+function useTool(toolId) {
+  const tool = APP_DATA.tools.find(t => t.id === toolId);
+  if (!tool) return;
+  if (!APP_DATA.toolUsage) APP_DATA.toolUsage = {};
+  const today = new Date().toISOString().slice(0,10);
+  if (!APP_DATA.toolUsage[today]) APP_DATA.toolUsage[today] = [];
+  APP_DATA.toolUsage[today].push(toolId);
+  scheduleSave(APP_DATA);
+  showToast(`✅ 已记录：${tool.name}`);
+}
+
+function deleteTool(toolId) {
+  const tool = APP_DATA.tools.find(t => t.id === toolId);
+  if (!tool) return;
+  if (!confirm(`确定要删除"${tool.name}"吗？`)) return;
+  APP_DATA.tools = APP_DATA.tools.filter(t => t.id !== toolId);
+  scheduleSave(APP_DATA);
+  render();
+  showToast(`🗑️ 已删除：${tool.name}`);
+}
+
+function showAddTool() {
+  const name = prompt('请输入恢复方法名称（如：正念冥想、散步休息）：');
+  if (!name || !name.trim()) return;
+  const desc = prompt('请输入简短描述（如：5分钟呼吸练习）：');
+  if (!desc || !desc.trim()) return;
+  const cat = prompt('请输入分类（如：身体、心理、感官）：', '身体');
+  APP_DATA.tools.push({
+    id: generateId(),
+    name: name.trim(),
+    desc: desc.trim(),
+    category: (cat && cat.trim()) || '身体',
+  });
+  scheduleSave(APP_DATA);
+  render();
+  showToast(`✅ 已添加：${name.trim()}`);
+}
 
 // ==================== PLAN HELPERS ====================
 function ensurePlan(date) {
@@ -1968,13 +1903,6 @@ function deletePlanTask(id) {
   plan.tasks = plan.tasks.filter(t => t.id !== id);
   scheduleSave(APP_DATA);
   render();
-}
-
-function savePlanNote() {
-  const plan = ensurePlan(currentDate);
-  plan.note = document.getElementById('planNote').value;
-  scheduleSave(APP_DATA);
-  showToast('✅ 计划备注已保存');
 }
 
 function saveDaySummary() {
@@ -2217,7 +2145,7 @@ function renderSleep() {
         <div class="ss-lbl">📅 本周记录天数</div>
       </div>
       <div class="sleep-stat">
-        <div class="ss-val">${qualityCounts['很好'] || qualityCounts['良好'] || 0} 晚</div>
+        <div class="ss-val">${(qualityCounts['很好'] || 0) + (qualityCounts['良好'] || 0)} 晚</div>
         <div class="ss-lbl">⭐ 本周优质睡眠</div>
       </div>
     </div>
@@ -2504,10 +2432,14 @@ function renderWeekly() {
   // Render charts
   setTimeout(() => {
     ensureChartJs(() => {
+      // Destroy previous chart instances to prevent memory leaks
+      _chartInstances.forEach(c => { try { c.destroy(); } catch(e) {} });
+      _chartInstances = [];
+
       // 14-day energy trend chart
       const eCtx = document.getElementById('weekTrendChart');
       if (eCtx) {
-        new Chart(eCtx, {
+        try { const c1 = new Chart(eCtx, {
           type: 'line',
           data: {
             labels: trendLabels,
@@ -2526,13 +2458,13 @@ function renderWeekly() {
             plugins: { legend: { display: false } },
             scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } },
           },
-        });
+        }); _chartInstances.push(c1); } catch(e) { console.warn('Chart init failed:', e); }
       }
 
       // Duration chart (work + sleep bars)
       const dCtx = document.getElementById('weekDurationChart');
       if (dCtx) {
-        new Chart(dCtx, {
+        try { const c2 = new Chart(dCtx, {
           type: 'bar',
           data: {
             labels: chartLabels,
@@ -2560,7 +2492,7 @@ function renderWeekly() {
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 11 } } } },
             scales: { y: { beginAtZero: true, title: { display: true, text: '小时', font: { size: 10 } } } },
           },
-        });
+        }); _chartInstances.push(c2); } catch(e) { console.warn('Chart init failed:', e); }
       }
     });
   }, 50);
