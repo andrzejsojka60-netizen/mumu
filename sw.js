@@ -3,7 +3,7 @@
 // 提供离线缓存、静默更新
 // ================================================================
 
-const CACHE_NAME = 'energy-manager-v10';
+const CACHE_NAME = 'energy-manager-v11';
 const ASSETS = [
   './',
   './index.html',

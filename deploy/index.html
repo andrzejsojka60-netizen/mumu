@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -634,7 +634,7 @@ textarea { resize: vertical; min-height: 3rem; }
 
 /* Global touch optimization — eliminate 300ms delay, prevent callout */
 button, .btn, .nav-item, .bottom-nav-item, .preset-chip,
-.level-opt, .rating-opt, .cat-opt, .habit-dot, .plan-task-check,
+.level-opt, .rating-opt, .cat-opt, .plan-task-check,
 .plan-task-del, .btn-icon-only, .yesterday-btn, .generate-btn,
 .tool-card, input[type="date"].date-input {
   touch-action: manipulation;
@@ -647,32 +647,11 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 /* Active/pressed states for tap feedback */
 .btn:active, .btn-sm:active, .btn-xs:active { transform: scale(.97); }
 .preset-chip:active, .level-opt:active, .rating-opt:active,
-.cat-opt:active, .habit-dot:active, .plan-task-check:active,
+.cat-opt:active, .plan-task-check:active,
 .yesterday-btn:active, .generate-btn:active { transform: scale(.93); }
 .bottom-nav-item:active { background: var(--accent-light); }
 .nav-item:active { background: #e8e4dc; }
 
-/* Habit tracker */
-.habit-row {
-  display: flex; align-items: center; gap: .5rem;
-  padding: .4rem 0; border-bottom: 1px solid var(--border-light);
-}
-.habit-row:last-child { border-bottom: none; }
-.habit-days {
-  display: flex; gap: .2rem; margin-left: auto;
-}
-.habit-dot {
-  width: 18px; height: 18px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: .6rem;
-  display: flex; align-items: center; justify-content: center;
-}
-.habit-dot.done { background: var(--accent); border-color: var(--accent); color: #fff; }
-.habit-dot:hover { border-color: var(--accent); }
-/* Plan tasks */
 .plan-task { display: flex; align-items: center; gap: .75rem; padding: .6rem .75rem; border-radius: var(--radius-sm); background: var(--bg-root); margin-bottom: .35rem; transition: var(--transition); }
 .plan-task:hover { background: var(--border-light); }
 .plan-task.done .plan-task-text { text-decoration: line-through; color: var(--text-tertiary); }
@@ -899,12 +878,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .tool-name { font-size: .92rem; }
   .tool-desc { font-size: .8rem; }
   .tool-category { font-size: .7rem; }
-
-  /* Habit tracker */
-  .habit-dot { width: 28px; height: 28px; font-size: .8rem; border-radius: 5px; }
-  .habit-row { flex-wrap: wrap; gap: .35rem; padding: .55rem 0; }
-  .habit-row > span:first-child { font-size: .88rem; }
-
   /* Modal */
   .modal { width: 92vw; padding: 1.3rem; border-radius: var(--radius-lg); }
   .modal-title { font-size: 1.05rem; }
@@ -1037,7 +1010,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .plan-task-del { min-height: 40px; min-width: 40px; }
   .chart-wrap { height: 210px; }
   .tool-card { padding: .85rem .9rem; }
-  .habit-dot { width: 26px; height: 26px; font-size: .75rem; }
   .preset-chip { padding: .4rem .6rem; font-size: .74rem; min-height: 36px; }
   .cat-opt { padding: .45rem .55rem; font-size: .76rem; min-height: 38px; }
   .preset-row { gap: .3rem; }
@@ -1135,22 +1107,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 .week-detail-table tr:last-child td { border-bottom: none; }
 .week-detail-table .wd-today td { background: var(--accent-light); }
 
-/* Weekly habit summary */
-.week-habit-summary {
-  display: flex; align-items: center; gap: .5rem;
-  padding: .45rem 0; border-bottom: 1px solid var(--border-light);
-  font-size: .83rem;
-}
-.week-habit-summary:last-child { border-bottom: none; }
-.week-habit-summary .wh-name { flex: 1; font-weight: 550; }
-.week-habit-summary .wh-count { font-size: .75rem; color: var(--text-tertiary); white-space: nowrap; }
-.week-habit-summary .wh-dots { display: flex; gap: .15rem; }
-.week-habit-summary .wh-dot {
-  width: 14px; height: 14px; border-radius: 3px;
-  border: 1px solid var(--border);
-}
-.week-habit-summary .wh-dot.done { background: var(--accent); border-color: var(--accent); }
-
 /* Weekly reflection */
 .week-reflection { margin-top: .5rem; }
 
@@ -1171,8 +1127,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   .week-detail-table { font-size: .8rem; }
   .week-detail-table th { font-size: .7rem; padding: .35rem .4rem; }
   .week-detail-table td { padding: .35rem .4rem; }
-  .week-habit-summary { font-size: .8rem; gap: .35rem; }
-  .week-habit-summary .wh-dot { width: 18px; height: 18px; }
 }
 
 @media (max-width: 400px) {
@@ -1346,7 +1300,6 @@ function migrateData(data) {
   if (!data.records) data.records = {};
   if (!data.tools) data.tools = [...DEFAULT_TOOLS];
   if (!data.customEmotions) data.customEmotions = [];
-  if (!data.habitLog) data.habitLog = {};
   if (!data.timePresets) data.timePresets = [...TIME_PRESETS];
   if (!data.plans) data.plans = {};
   if (!data.sleepLog) data.sleepLog = {};
@@ -1418,7 +1371,6 @@ function getDefaultData() {
     plans: {},
     tools: [...DEFAULT_TOOLS],
     customEmotions: [],
-    habitLog: {},
     timePresets: [...TIME_PRESETS],
     sleepLog: {},
     weeklyNotes: {},
@@ -1540,7 +1492,7 @@ function importData(input) {
 
 function resetData() {
   if (!confirm('⚠️ 确定要清除全部数据吗？\n此操作不可恢复！建议先导出备份。')) return;
-  if (!confirm('再次确认：清除所有精力记录、自定义工具和打卡数据？')) return;
+  if (!confirm('再次确认：清除所有精力记录和自定义工具？')) return;
   APP_DATA = getDefaultData();
   saveData(APP_DATA);
   currentDate = today();
@@ -1946,50 +1898,14 @@ function renderToolbox() {
 	    </div>
 	  `).join('');
 
-	  // 习惯打卡数据
-	  const last7Days = [];
-	  for (let i = 6; i >= 0; i--) {
-	    const d = new Date();
-	    d.setDate(d.getDate() - i);
-	    last7Days.push(d.toISOString().slice(0,10));
-	  }
-
-	  const habitsHtml = APP_DATA.tools.map(t => {
-	    const daysHtml = last7Days.map(d => {
-	      const done = APP_DATA.habitLog[d]?.[t.id];
-	      return `<span class="habit-dot${done ? ' done' : ''}"
-	                   onclick="toggleHabit('${d}','${t.id}')"
-	                   title="${d}">${done ? '✓' : ''}</span>`;
-	    }).join('');
-	    const streak = last7Days.filter(d => APP_DATA.habitLog[d]?.[t.id]).length;
-	    return `
-	    <div class="habit-row">
-	      <span style="font-weight:550;flex:1">${t.name}</span>
-	      <span style="font-size:.72rem;color:var(--text-tertiary)">近7天 ${streak}/7</span>
-	      <div class="habit-days">${daysHtml}</div>
-	    </div>`;
-	  }).join('');
 
 	  const html = `
 	  <div class="page-header">
-	    <h1 class="page-title">🧰 恢复工具箱 & 习惯打卡</h1>
+	    <h1 class="page-title">🧰 恢复工具箱</h1>
 	    <button class="btn btn-primary btn-sm" onclick="showAddTool()">+ 添加方法</button>
 	  </div>
 
 	  <div class="tool-grid">${toolsHtml}</div>
-
-	  <div class="card mt-1">
-	    <div class="card-header">
-	      <span class="card-title">📅 恢复动作打卡表</span>
-	      <span style="font-size:.75rem;color:var(--text-tertiary)">点击圆圈打卡 / 点击上方「使用此方法」快速打卡</span>
-	    </div>
-	    <div style="display:flex;gap:.5rem;margin-bottom:.5rem;padding-left:1rem">
-	      <span style="flex:1;font-size:.72rem;color:var(--text-tertiary)">恢复方法</span>
-	      <span style="font-size:.72rem;color:var(--text-tertiary);margin-right:.5rem">统计</span>
-	      <span style="font-size:.72rem;color:var(--text-tertiary)">${last7Days.map(d => d.slice(5)).join(' ')}</span>
-	    </div>
-	    ${habitsHtml || '<div class="empty-state"><p>暂无恢复方法，点击上方添加</p></div>'}
-	  </div>
 
 	  <div class="card mt-1">
 	    <div class="card-title mb-1">💡 福格习惯模型（书中第四章）</div>
@@ -2003,32 +1919,6 @@ function renderToolbox() {
 
 	  $main.innerHTML = html;
 	}
-
-function toggleHabit(date, toolId) {
-  if (!APP_DATA.habitLog[date]) APP_DATA.habitLog[date] = {};
-  if (APP_DATA.habitLog[date][toolId]) {
-    delete APP_DATA.habitLog[date][toolId];
-  } else {
-    APP_DATA.habitLog[date][toolId] = true;
-  }
-  scheduleSave(APP_DATA);
-
-  // Inline DOM update — toggle dot and update streak
-  const dot = document.querySelector(`[onclick*="toggleHabit('${date}','${toolId}')"]`);
-  if (dot) {
-    const done = APP_DATA.habitLog[date] && APP_DATA.habitLog[date][toolId];
-    if (done) { dot.classList.add('done'); dot.textContent = '✓'; }
-    else { dot.classList.remove('done'); dot.textContent = ''; }
-    // Update streak counter in the same row
-    const daysDiv = dot.closest('.habit-days');
-    if (daysDiv) {
-      const allDots = daysDiv.querySelectorAll('.habit-dot');
-      const streak = Array.from(allDots).filter(d => d.classList.contains('done')).length;
-      const streakSpan = daysDiv.parentElement.querySelector('span[style*="font-size:.72rem"]');
-      if (streakSpan) streakSpan.textContent = `近7天 ${streak}/7`;
-    }
-  }
-}
 
 // ==================== PLAN HELPERS ====================
 function ensurePlan(date) {
@@ -2515,20 +2405,6 @@ function renderWeekly() {
     </tr>`;
   }).join('');
 
-  // Habit summary
-  const habitRowsHtml = APP_DATA.tools.map(t => {
-    const weekDots = week.days.map(ds => {
-      const done = APP_DATA.habitLog[ds] && APP_DATA.habitLog[ds][t.id];
-      return `<span class="wh-dot${done ? ' done' : ''}" title="${ds}"></span>`;
-    }).join('');
-    const weekCount = week.days.filter(ds => APP_DATA.habitLog[ds] && APP_DATA.habitLog[ds][t.id]).length;
-    return `<div class="week-habit-summary">
-      <span class="wh-name">${t.name}</span>
-      <span class="wh-count">${weekCount}/7 天</span>
-      <span class="wh-dots">${weekDots}</span>
-    </div>`;
-  }).join('');
-
   // Charts data — bar chart uses week days, line chart uses 14-day trend
   const chartLabels = week.days.map(ds => ds.slice(5));
   const workData = dayData.map(d => d.workMin > 0 ? +(d.workMin / 60).toFixed(1) : null);
@@ -2614,11 +2490,6 @@ function renderWeekly() {
         <div class="card-title mb-1">⏱️ 工作时长 & 睡眠时长</div>
         <div class="chart-wrap"><canvas id="weekDurationChart"></canvas></div>
       </div>
-    </div>
-
-    <div class="card mt-1">
-      <div class="card-title mb-1">🎯 习惯打卡汇总</div>
-      ${habitRowsHtml || '<div class="empty-state"><p>暂无恢复方法</p></div>'}
     </div>
 
     <div class="card mt-1">
