@@ -1764,8 +1764,8 @@ function goToToday() {
 
 // Chart.js lazy loader (used by weekly summary panel)
 let _chartJsPromise = null;
-function ensureChartJs(callback) {
 let _chartInstances = [];
+function ensureChartJs(callback) {
   if (window.Chart) { callback(); return; }
   if (!_chartJsPromise) {
     _chartJsPromise = new Promise((resolve) => {
