@@ -361,6 +361,34 @@ textarea { resize: vertical; min-height: 3rem; }
 }
 .tool-actions { display: flex; gap: .35rem; margin-top: .5rem; }
 
+  /* Compact tool list (in record panel) */
+  .tool-list { margin-top: 1rem; border-top: 1px solid var(--border-light); padding-top: .75rem; }
+  .tool-list-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+  .tool-list-title { font-size: .9rem; font-weight: 650; color: var(--text-primary); display: flex; align-items: center; gap: .4rem; }
+  .tool-item { border-bottom: 1px solid var(--border-light); }
+  .tool-item:last-child { border-bottom: none; }
+  .tool-item-header {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .55rem .25rem; cursor: pointer;
+    transition: var(--transition); border-radius: var(--radius-sm);
+    user-select: none; -webkit-user-select: none;
+  }
+  .tool-item-header:hover { background: #f8f7f3; }
+  .tool-item-arrow { font-size: .65rem; color: var(--text-tertiary); transition: transform .2s; flex-shrink: 0; }
+  .tool-item.open .tool-item-arrow { transform: rotate(90deg); }
+  .tool-cat-tag {
+    font-size: .65rem; padding: .1rem .4rem; border-radius: 8px;
+    background: var(--accent-light); color: var(--accent);
+    font-weight: 500; flex-shrink: 0; white-space: nowrap;
+  }
+  .tool-item-name { flex: 1; font-size: .83rem; font-weight: 500; color: var(--text-primary); }
+  .tool-item-body {
+    display: none; padding: 0 .25rem .6rem 1.4rem;
+    font-size: .78rem; color: var(--text-secondary); line-height: 1.6;
+  }
+  .tool-item.open .tool-item-body { display: block; }
+  .tool-item-desc { margin-bottom: .4rem; }
+  .tool-item-body .btn { margin-right: .3rem; }
 /* ========== Charts ========== */
 .charts-row {
   display: grid;
@@ -1089,7 +1117,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
     <ul class="nav-list">
       <li><button class="nav-item active" data-panel="plan"><span class="icon">📋</span> 每日计划</button></li>
       <li><button class="nav-item" data-panel="record"><span class="icon">📝</span> 精力记录</button></li>
-      <li><button class="nav-item" data-panel="toolbox"><span class="icon">🧰</span> 恢复工具箱</button></li>
       <li><button class="nav-item" data-panel="sleep"><span class="icon">😴</span> 睡眠记录</button></li>
       <li><button class="nav-item" data-panel="weekly"><span class="icon">📈</span> 每周总结</button></li>
     </ul>
@@ -1116,7 +1143,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 <nav class="bottom-nav" id="bottomNav">
   <button class="bottom-nav-item active" data-panel="plan"><span class="bn-icon">📋</span><span class="bn-label">计划</span></button>
   <button class="bottom-nav-item" data-panel="record"><span class="bn-icon">📝</span><span class="bn-label">记录</span></button>
-  <button class="bottom-nav-item" data-panel="toolbox"><span class="bn-icon">🧰</span><span class="bn-label">工具箱</span></button>
   <button class="bottom-nav-item" data-panel="sleep"><span class="bn-icon">😴</span><span class="bn-label">睡眠</span></button>
   <button class="bottom-nav-item" data-panel="weekly"><span class="bn-icon">📈</span><span class="bn-label">总结</span></button>
 </nav>
@@ -1566,6 +1592,28 @@ function renderRecord() {
         <div class="lbl">⚠️ 精力较差时段（差/较差）</div>
       </div>
     </div>` : ''}
+    <div class="tool-list">
+      <div class="tool-list-header-row">
+        <span class="tool-list-title">🧰 恢复工具箱</span>
+        <button class="btn btn-warm btn-xs" onclick="showAddTool()">+ 添加方法</button>
+      </div>
+      ${APP_DATA.tools.map(t => `
+        <div class="tool-item" id="tool-${t.id}">
+          <div class="tool-item-header" onclick="toggleToolDetail('${t.id}')">
+            <span class="tool-item-arrow">▶</span>
+            <span class="tool-cat-tag">${t.category}</span>
+            <span class="tool-item-name">${t.name}</span>
+          </div>
+          <div class="tool-item-body">
+            <div class="tool-item-desc">${t.desc}</div>
+            <button class="btn btn-primary btn-xs" onclick="event.stopPropagation(); useTool('${t.id}')">🧘 使用</button>
+            ${!DEFAULT_TOOLS.find(dt => dt.id === t.id) ? `<button class="btn btn-danger btn-xs" onclick="event.stopPropagation(); deleteTool('${t.id}')">删除</button>` : ''}
+          </div>
+        </div>
+      `).join('')}
+      ${APP_DATA.tools.length === 0 ? '<div style="text-align:center;padding:.5rem;color:var(--text-tertiary);font-size:.78rem">暂无恢复方法，点击上方按钮添加</div>' : ''}
+    </div>
+
   </div>`;
 
   $main.innerHTML = html;
@@ -1854,6 +1902,18 @@ function showAddTool() {
   render();
   showToast(`✅ 已添加：${name.trim()}`);
 }
+
+function toggleToolDetail(toolId) {
+  const item = document.getElementById('tool-' + toolId);
+  if (!item) return;
+  const wasOpen = item.classList.contains('open');
+  // Close all other open tools
+  document.querySelectorAll('.tool-item.open').forEach(el => el.classList.remove('open'));
+  // Toggle clicked one (unless it was already open, then just close)
+  if (!wasOpen) item.classList.add('open');
+}
+
+
 
 // ==================== PLAN HELPERS ====================
 function ensurePlan(date) {
@@ -2503,7 +2563,7 @@ function render() {
   switch(currentPanel) {
     case 'plan': renderPlan(); break;
     case 'record': renderRecord(); break;
-    case 'toolbox': renderToolbox(); break;
+    case 'toolbox': currentPanel = 'record'; renderRecord(); break;
     case 'sleep': renderSleep(); break;
     case 'weekly': renderWeekly(); break;
     default: renderPlan();
